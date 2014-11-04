@@ -16586,6 +16586,8 @@ Content-Type: application/json
 				<tr class=alt><td>minRequiredBalance</td></tr>
 	            <tr><td class=fielddesc><b>Optional</b>: If provided, sets an indicator of the minimum required balance of the  savings account e.g. <b>5,000</b> else set the limit as zero. Note that <span>enforceMinRequiredBalance</span> determines if the minimum required balance is enforced</td></tr>
 
+				<tr class=alt><td>syncInterestPostingWithMeeting</td></tr>
+	            <tr><td class=fielddesc><b>Optional</b>: If provided, Interest posting date will be in sync with the meeting date of the group. this product can't be assigned to individual savings.</td></tr>
 	        </table>
 	    </div>
 	</div>
@@ -17157,7 +17159,7 @@ Content-Type: application/json
             <br/>
             <table class=matrixHeading>
                 <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Optional Fields</div></td></tr>
-                <tr class=alt><td>minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation</tr>
+                <tr class=alt><td>minRequiredOpeningBalance, lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeForTransfers, paymentChannelToFundSourceMappings, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation, syncInterestPostingWithMeeting</tr>
             </table>
         </div>
         <div class="method-example">
@@ -17595,7 +17597,12 @@ Content-Type: application/json
 					product and the type of the accounting rule to be used
 					<span>Example Values:</span>1=NONE,2=CASH_BASED</td>
 				</tr>
-
+				<tr class=alt><td>postInterestAsPerFinancialYear</td></tr>
+	            <tr>
+					<td class=fielddesc><b>Optional</b>: if specified as true system will post interest as per the financial year else system will post interest as per the activation date.
+					<br><span><b>Example when enabled:</b> if financial year is April and interest posting frequency is quarterly then system is posting interest on 1st July, 1st October, 1st January and 1st April</span>
+					<br><span><b>Example when not enabled:</b> if FD started on 2nd may with quarterly posting then the interest posting periods will be 2nd August, 2nd November, 2nd February and    2nd May</span></td>
+				</tr>
 	        </table>
 	    </div>
 	</div>
@@ -17621,7 +17628,7 @@ Content-Type: application/json
             <br/>
             <table class=matrixHeading>
                 <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Optional Fields</div></td></tr>
-                <tr class=alt><td>lockinPeriodFrequency, lockinPeriodFrequencyType, maxDepositTerm, maxDepositTermTypeId, inMultiplesOfDepositTerm, inMultiplesOfDepositTermTypeId, preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnTypeId, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, charts</tr>
+                <tr class=alt><td>lockinPeriodFrequency, lockinPeriodFrequencyType, maxDepositTerm, maxDepositTermTypeId, inMultiplesOfDepositTerm, inMultiplesOfDepositTermTypeId, preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnTypeId, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, charts, postInterestAsPerFinancialYear</tr>
             </table>
         </div>
         <div class="method-example">
@@ -18098,7 +18105,12 @@ Content-Type: application/json
 					product and the type of the accounting rule to be used
 					<span>Example Values:</span>1=NONE,2=CASH_BASED</td>
 				</tr>
-
+				<tr class=alt><td>postInterestAsPerFinancialYear</td></tr>
+	            <tr>
+					<td class=fielddesc><b>Optional</b>: if specified as true system will post interest as per the financial year else system will post interest as per the activation date.
+					<br><span><b>Example when enabled:</b> if financial year is April and interest posting frequency is quarterly then system is posting interest on 1st July, 1st October, 1st January and 1st April</span>
+					<br><span><b>Example when not enabled:</b> if RD started on 2nd may with quarterly posting then the interest posting periods will be 2nd August, 2nd November, 2nd February and    2nd May</span></td>
+				</tr>
 	        </table>
 	    </div>
 	</div>
@@ -18124,7 +18136,7 @@ Content-Type: application/json
             <br/>
             <table class=matrixHeading>
                 <tr class="matrixHeadingBG"><td><div class="mifosXHeading2">Optional Fields</div></td></tr>
-                <tr class=alt><td>lockinPeriodFrequency, lockinPeriodFrequencyType, maxDepositTerm, maxDepositTermTypeId, inMultiplesOfDepositTerm, inMultiplesOfDepositTermTypeId, preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnTypeId, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, charts, minDepositAmount, maxDepositAmount</tr>
+                <tr class=alt><td>lockinPeriodFrequency, lockinPeriodFrequencyType, maxDepositTerm, maxDepositTermTypeId, inMultiplesOfDepositTerm, inMultiplesOfDepositTermTypeId, preClosurePenalApplicable, preClosurePenalInterest, preClosurePenalInterestOnTypeId, feeToIncomeAccountMappings, penaltyToIncomeAccountMappings, charges, charts, minDepositAmount, maxDepositAmount,postInterestAsPerFinancialYear</tr>
             </table>
         </div>
         <div class="method-example">
