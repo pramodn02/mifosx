@@ -22,6 +22,10 @@ import com.jayway.restassured.specification.ResponseSpecification;
 public class GroupHelper {
 
     private static final String CREATE_GROUP_URL = "/mifosng-provider/api/v1/groups?" + Utils.TENANT_IDENTIFIER;
+    public static final String CALENDAR_FREQUENCY_MONTHLY = "3";
+    public static final String CALENDAR_FREQUENCY_WEEKLY = "2";
+    public static final String CALENDAR_FREQUENCY_DAILY= "1";
+    public static final String CALENDAR_FREQUENCY_YEARLY= "4";
 
     public static Integer createGroup(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             @SuppressWarnings("unused") final boolean active) {
@@ -42,16 +46,24 @@ public class GroupHelper {
 
     public static Integer associateClient(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final String groupId, final String clientMember) {
-        final String GROUP_ASSOCIATE_URL = "/mifosng-provider/api/v1/groups/" + groupId
-                + "?command=associateClients&" + Utils.TENANT_IDENTIFIER;
+        final String GROUP_ASSOCIATE_URL = "/mifosng-provider/api/v1/groups/" + groupId + "?command=associateClients&"
+                + Utils.TENANT_IDENTIFIER;
         System.out.println("---------------------------------Associate Client To A GROUP---------------------------------------------");
         return Utils.performServerPost(requestSpec, responseSpec, GROUP_ASSOCIATE_URL, associateClientAsJSON(clientMember), "groupId");
     }
 
+    public static Integer attachMeeting(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
+            final String groupId, final String frequency, final String interval, final String startDate) {
+        final String GROUP_ASSOCIATE_URL = "/mifosng-provider/api/v1/groups/" + groupId + "/calendars?" + Utils.TENANT_IDENTIFIER;
+        System.out.println("---------------------------------Attach Meeting To A GROUP---------------------------------------------");
+        return Utils.performServerPost(requestSpec, responseSpec, GROUP_ASSOCIATE_URL,
+                getAttachMeetingAsJSON(frequency, interval, startDate), "groupId");
+    }
+
     public static Integer disAssociateClient(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final String groupId, final String clientMember) {
-        final String GROUP_ASSOCIATE_URL = "/mifosng-provider/api/v1/groups/" + groupId
-                + "?command=disassociateClients&" + Utils.TENANT_IDENTIFIER;
+        final String GROUP_ASSOCIATE_URL = "/mifosng-provider/api/v1/groups/" + groupId + "?command=disassociateClients&"
+                + Utils.TENANT_IDENTIFIER;
         System.out.println("---------------------------------Disassociate Client To A GROUP---------------------------------------------");
         return Utils.performServerPost(requestSpec, responseSpec, GROUP_ASSOCIATE_URL, associateClientAsJSON(clientMember), "groupId");
     }
@@ -92,6 +104,20 @@ public class GroupHelper {
             System.out.println("defaulting to inactive group: 04 March 2011");
         }
 
+        System.out.println("map : " + map);
+        return new Gson().toJson(map);
+    }
+
+    public static String getAttachMeetingAsJSON(final String frequency, final String interval, final String startDate) {
+        final HashMap<String, String> map = new HashMap<>();
+        map.put("repeating", "true");
+        map.put("title", randomNameGenerator("groups_CollectionMeeting", 5));
+        map.put("frequency", frequency);
+        map.put("dateFormat", "dd MMMM yyyy");
+        map.put("locale", "en");
+        map.put("interval", interval);
+        map.put("startDate", startDate);
+        map.put("typeId", "1");
         System.out.println("map : " + map);
         return new Gson().toJson(map);
     }
@@ -154,8 +180,8 @@ public class GroupHelper {
             final Integer generatedGroupID, final Integer groupMember) {
         List<String> list = new ArrayList<>();
         System.out.println("------------------------------CHECK GROUP MEMBERS------------------------------------\n");
-        final String GROUP_URL = "/mifosng-provider/api/v1/groups/" + generatedGroupID
-                + "?associations=clientMembers&" + Utils.TENANT_IDENTIFIER;
+        final String GROUP_URL = "/mifosng-provider/api/v1/groups/" + generatedGroupID + "?associations=clientMembers&"
+                + Utils.TENANT_IDENTIFIER;
         list = Utils.performServerGet(requestSpec, responseSpec, GROUP_URL, "clientMembers");
         assertTrue("ERROR IN GROUP MEMBER", list.toString().contains("id=" + groupMember.toString()));
     }
@@ -164,8 +190,8 @@ public class GroupHelper {
             final Integer generatedGroupID) {
         List<String> list = new ArrayList<>();
         System.out.println("------------------------------CHECK EMPTY GROUP MEMBER LIST------------------------------------\n");
-        final String GROUP_URL = "/mifosng-provider/api/v1/groups/" + generatedGroupID
-                + "?associations=clientMembers&" + Utils.TENANT_IDENTIFIER;
+        final String GROUP_URL = "/mifosng-provider/api/v1/groups/" + generatedGroupID + "?associations=clientMembers&"
+                + Utils.TENANT_IDENTIFIER;
         list = Utils.performServerGet(requestSpec, responseSpec, GROUP_URL, "clientMembers");
         assertEquals("GROUP MEMBER LIST NOT EMPTY", list, null);
     }

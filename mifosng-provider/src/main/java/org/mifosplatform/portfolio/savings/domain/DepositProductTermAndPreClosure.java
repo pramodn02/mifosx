@@ -5,9 +5,12 @@
  */
 package org.mifosplatform.portfolio.savings.domain;
 
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.postInterestAsPerFinancialYearParamName;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -28,6 +31,7 @@ public class DepositProductTermAndPreClosure extends AbstractPersistable<Long> {
     @Embedded
     protected DepositTermDetail depositTermDetail;
 
+    @SuppressWarnings("unused")
     @OneToOne
     @JoinColumn(name = "savings_product_id", nullable = false)
     private FixedDepositProduct product;
@@ -35,22 +39,27 @@ public class DepositProductTermAndPreClosure extends AbstractPersistable<Long> {
     @Embedded
     private DepositProductAmountDetails depositProductAmountDetails;
 
+    @Column(name = "post_interest_as_per_financial_year", nullable = false)
+    private boolean postInterestAsPerFinancialYear;
+
     protected DepositProductTermAndPreClosure() {
         super();
     }
 
     public static DepositProductTermAndPreClosure createNew(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
-            DepositProductAmountDetails depositProductMinMaxAmountDetails, SavingsProduct product) {
+            DepositProductAmountDetails depositProductMinMaxAmountDetails, SavingsProduct product, boolean postInterestAsPerFinancialYear) {
 
-        return new DepositProductTermAndPreClosure(preClosureDetail, depositTermDetail, depositProductMinMaxAmountDetails, product);
+        return new DepositProductTermAndPreClosure(preClosureDetail, depositTermDetail, depositProductMinMaxAmountDetails, product,
+                postInterestAsPerFinancialYear);
     }
 
     private DepositProductTermAndPreClosure(DepositPreClosureDetail preClosureDetail, DepositTermDetail depositTermDetail,
-            DepositProductAmountDetails depositProductMinMaxAmountDetails, SavingsProduct product) {
+            DepositProductAmountDetails depositProductMinMaxAmountDetails, SavingsProduct product, boolean postInterestAsPerFinancialYear) {
         this.preClosureDetail = preClosureDetail;
         this.depositTermDetail = depositTermDetail;
         this.depositProductAmountDetails = depositProductMinMaxAmountDetails;
         this.product = (FixedDepositProduct) product;
+        this.postInterestAsPerFinancialYear = postInterestAsPerFinancialYear;
     }
 
     public Map<String, Object> update(final JsonCommand command, final DataValidatorBuilder baseDataValidator) {
@@ -66,6 +75,13 @@ public class DepositProductTermAndPreClosure extends AbstractPersistable<Long> {
         if (this.depositProductAmountDetails != null) {
             actualChanges.putAll(this.depositProductAmountDetails.update(command));
         }
+
+        if (command.isChangeInBooleanParameterNamed(postInterestAsPerFinancialYearParamName, this.postInterestAsPerFinancialYear)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(postInterestAsPerFinancialYearParamName);
+            actualChanges.put(postInterestAsPerFinancialYearParamName, newValue);
+            this.postInterestAsPerFinancialYear = newValue;
+        }
+
         return actualChanges;
     }
 
@@ -83,5 +99,10 @@ public class DepositProductTermAndPreClosure extends AbstractPersistable<Long> {
 
     public void updateProductReference(final SavingsProduct product) {
         this.product = (FixedDepositProduct) product;
+    }
+
+    
+    public boolean isPostInterestAsPerFinancialYearEnabled() {
+        return this.postInterestAsPerFinancialYear;
     }
 }

@@ -66,8 +66,6 @@ public class DepositAccountPreMatureCalculationPlatformServiceImpl implements De
     	
     	final boolean isSavingsInterestPostingAtCurrentPeriodEnd = this.configurationDomainService
 				.isSavingsInterestPostingAtCurrentPeriodEnd();
-    	final Integer financialYearBeginningMonth = this.configurationDomainService
-    			.retrieveFinancialYearBeginningMonth();
     	
         this.depositAccountTransactionDataValidator.validatePreMatureAmountCalculation(query.json(), depositAccountType);
         final SavingsAccount account = this.depositAccountAssembler.assembleFrom(accountId, depositAccountType);
@@ -90,13 +88,13 @@ public class DepositAccountPreMatureCalculationPlatformServiceImpl implements De
             final FixedDepositAccount fd = (FixedDepositAccount) account;
             accountData = FixedDepositAccountData.preClosureDetails(account.getId(),
                     fd.calculatePreMatureAmount(interestCalculatedToDate, isPreMatureClosure,
-                    		isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth),
+                    		isSavingsInterestPostingAtCurrentPeriodEnd),
                     		onAccountClosureOptions, paymentTypeOptions, savingsAccountDatas);
         } else if (depositAccountType.isRecurringDeposit()) {
             final RecurringDepositAccount rd = (RecurringDepositAccount) account;
             accountData = RecurringDepositAccountData.preClosureDetails(account.getId(),
                     rd.calculatePreMatureAmount(interestCalculatedToDate, isPreMatureClosure,
-                    		isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth),
+                    		isSavingsInterestPostingAtCurrentPeriodEnd),
                     		onAccountClosureOptions, paymentTypeOptions, savingsAccountDatas);
         }
 

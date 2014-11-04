@@ -126,6 +126,7 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("sp.nominal_annual_interest_rate as nominalAnnualInterestRate, ");
             sqlBuilder.append("sp.interest_compounding_period_enum as compoundingInterestPeriodType, ");
             sqlBuilder.append("sp.interest_posting_period_enum as interestPostingPeriodType, ");
+            sqlBuilder.append("sp.sync_interest_posting_with_meeting as syncInterestPostingWithMeeting, ");
             sqlBuilder.append("sp.interest_calculation_type_enum as interestCalculationType, ");
             sqlBuilder.append("sp.interest_calculation_days_in_year_type_enum as interestCalculationDaysInYearType, ");
             sqlBuilder.append("sp.lockin_period_frequency as lockinPeriodFrequency,");
@@ -183,10 +184,12 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
                 lockinPeriodFrequencyType = SavingsEnumerations.lockinPeriodFrequencyType(lockinPeriodFrequencyTypeValue);
             }
             final BigDecimal minBalanceForInterestCalculation = rs.getBigDecimal("minBalanceForInterestCalculation");
+            final boolean syncInterestPostingWithMeeting = rs.getBoolean("syncInterestPostingWithMeeting");
 
             return DepositProductData.instance(id, name, shortName, description, currency, nominalAnnualInterestRate,
                     compoundingInterestPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
-                    lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation);
+                    lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, minBalanceForInterestCalculation,
+                    syncInterestPostingWithMeeting);
         }
     }
 
@@ -207,7 +210,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("dptp.in_multiples_of_deposit_term as inMultiplesOfDepositTerm, ");
             sqlBuilder.append("dptp.in_multiples_of_deposit_term_type_enum as inMultiplesOfDepositTermTypeId, ");
             sqlBuilder.append("dptp.min_deposit_amount as minDepositAmount, dptp.deposit_amount as depositAmount, ");
-            sqlBuilder.append("dptp.max_deposit_amount as maxDepositAmount ");
+            sqlBuilder.append("dptp.max_deposit_amount as maxDepositAmount, ");
+            sqlBuilder.append("dptp.post_interest_as_per_financial_year as postInterestAsPerFinancialYear ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("left join m_deposit_product_term_and_preclosure dptp on sp.id=dptp.savings_product_id ");
             sqlBuilder.append("join m_currency curr on curr.code = sp.currency_code ");
@@ -246,10 +250,12 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final BigDecimal minDepositAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "minDepositAmount");
             final BigDecimal depositAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "depositAmount");
             final BigDecimal maxDepositAmount = JdbcSupport.getBigDecimalDefaultToNullIfZero(rs, "maxDepositAmount");
+            final boolean postInterestAsPerFinancialYear = rs.getBoolean("postInterestAsPerFinancialYear");
 
             return FixedDepositProductData.instance(depositProductData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
-                    inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount);
+                    inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, minDepositAmount, depositAmount, maxDepositAmount,
+                    postInterestAsPerFinancialYear);
         }
     }
 
@@ -274,7 +280,8 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             sqlBuilder.append("dptp.min_deposit_term_type_enum as minDepositTermTypeId, ");
             sqlBuilder.append("dptp.max_deposit_term_type_enum as maxDepositTermTypeId, ");
             sqlBuilder.append("dptp.in_multiples_of_deposit_term as inMultiplesOfDepositTerm, ");
-            sqlBuilder.append("dptp.in_multiples_of_deposit_term_type_enum as inMultiplesOfDepositTermTypeId ");
+            sqlBuilder.append("dptp.in_multiples_of_deposit_term_type_enum as inMultiplesOfDepositTermTypeId, ");
+            sqlBuilder.append("dptp.post_interest_as_per_financial_year as postInterestAsPerFinancialYear ");
             sqlBuilder.append("from m_savings_product sp ");
             sqlBuilder.append("left join m_deposit_product_term_and_preclosure dptp on sp.id=dptp.savings_product_id ");
             sqlBuilder.append("left join m_deposit_product_recurring_detail dprd on sp.id=dprd.savings_product_id ");
@@ -316,11 +323,12 @@ public class DepositProductReadPlatformServiceImpl implements DepositProductRead
             final Integer inMultiplesOfDepositTermTypeId = JdbcSupport.getInteger(rs, "inMultiplesOfDepositTermTypeId");
             final EnumOptionData inMultiplesOfDepositTermType = (inMultiplesOfDepositTermTypeId == null) ? null : SavingsEnumerations
                     .depositTermFrequencyType(inMultiplesOfDepositTermTypeId);
+            final boolean postInterestAsPerFinancialYear = rs.getBoolean("postInterestAsPerFinancialYear");
 
             return RecurringDepositProductData.instance(depositProductData, preClosurePenalApplicable, preClosurePenalInterest,
                     preClosurePenalInterestOnType, minDepositTerm, maxDepositTerm, minDepositTermType, maxDepositTermType,
                     inMultiplesOfDepositTerm, inMultiplesOfDepositTermType, isMandatoryDeposit, allowWithdrawal,
-                    adjustAdvanceTowardsFuturePayments, minDepositAmount, depositAmount, maxDepositAmount);
+                    adjustAdvanceTowardsFuturePayments, minDepositAmount, depositAmount, maxDepositAmount, postInterestAsPerFinancialYear);
         }
     }
 

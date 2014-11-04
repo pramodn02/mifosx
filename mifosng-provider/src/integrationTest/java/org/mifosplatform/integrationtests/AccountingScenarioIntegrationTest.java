@@ -248,7 +248,9 @@ public class AccountingScenarioIntegrationTest {
                 liabilityAccount);
 
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec, this.DATE_OF_JOINING);
-        final Integer savingsID = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer groupId = null;
+        final Integer savingsID = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsID);
         SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
@@ -508,6 +510,7 @@ public class AccountingScenarioIntegrationTest {
         System.out.println("------------------------------CREATING NEW FIXED DEPOSIT PRODUCT ---------------------------------------");
         FixedDepositProductHelper fixedDepositProductHelper = new FixedDepositProductHelper(this.requestSpec, this.responseSpec);
         final String fixedDepositProductJSON = fixedDepositProductHelper //
+                .withPostInterestAsPerFinancialYear(true) //
                 .withAccountingRuleAsCashBased(accounts).build(validFrom, validTo);
         return FixedDepositProductHelper.createFixedDepositProduct(fixedDepositProductJSON, requestSpec, responseSpec);
     }
@@ -525,6 +528,7 @@ public class AccountingScenarioIntegrationTest {
         System.out.println("------------------------------CREATING NEW RECURRING DEPOSIT PRODUCT ---------------------------------------");
         RecurringDepositProductHelper recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
         final String recurringDepositProductJSON = recurringDepositProductHelper //
+                .withPostInterestAsPerFinancialYear(true)//
                 .withAccountingRuleAsCashBased(accounts).build(validFrom, validTo);
         return RecurringDepositProductHelper.createRecurringDepositProduct(recurringDepositProductJSON, requestSpec, responseSpec);
     }
@@ -867,7 +871,7 @@ public class AccountingScenarioIntegrationTest {
         runOndate = dateFormat.format(todayDate.getTime());
 
         this.periodicAccrualAccountingHelper.runPeriodicAccrualAccounting(runOndate);
-        float interestPerDay = (totalInterest / totalDaysInPeriod *4) - INTEREST_3_DAYS ;
+        float interestPerDay = (totalInterest / totalDaysInPeriod * 4) - INTEREST_3_DAYS;
         interestPerDay = new Float(numberFormat.format(interestPerDay));
         this.loanTransactionHelper.checkAccrualTransactionForRepayment(getDateAsLocalDate(runOndate), interestPerDay, NEXT_FEE_PORTION,
                 NEXT_PENALTY_PORTION, loanID);

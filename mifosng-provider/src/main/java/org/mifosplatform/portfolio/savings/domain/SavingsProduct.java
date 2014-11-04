@@ -29,6 +29,7 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnn
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.overdraftLimitParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.shortNameParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.withdrawalFeeForTransfersParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.syncInterestPostingWithMeetingParamName;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -159,6 +160,9 @@ public class SavingsProduct extends AbstractPersistable<Long> {
     @Column(name = "min_balance_for_interest_calculation", scale = 6, precision = 19, nullable = true)
     private BigDecimal minBalanceForInterestCalculation;
 
+    @Column(name = "sync_interest_posting_with_meeting", nullable = false)
+    private boolean syncInterestPostingWithMeeting;
+
     public static SavingsProduct createNew(final String name, final String shortName, final String description,
             final MonetaryCurrency currency, final BigDecimal interestRate,
             final SavingsCompoundingInterestPeriodType interestCompoundingPeriodType,
@@ -167,12 +171,13 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
-            final BigDecimal minRequiredBalance, final BigDecimal minBalanceForInterestCalculation) {
+            final BigDecimal minRequiredBalance, final BigDecimal minBalanceForInterestCalculation, boolean syncInterestPostingWithMeeting) {
 
         return new SavingsProduct(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
-                allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation);
+                allowOverdraft, overdraftLimit, enforceMinRequiredBalance, minRequiredBalance, minBalanceForInterestCalculation,
+                syncInterestPostingWithMeeting);
     }
 
     protected SavingsProduct() {
@@ -186,11 +191,12 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final BigDecimal minRequiredOpeningBalance,
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit, BigDecimal minBalanceForInterestCalculation) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, BigDecimal minBalanceForInterestCalculation,
+            boolean syncInterestPostingWithMeeting) {
         this(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
-                false, null, minBalanceForInterestCalculation);
+                false, null, minBalanceForInterestCalculation, syncInterestPostingWithMeeting);
     }
 
     protected SavingsProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -200,7 +206,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final boolean allowOverdraft, final BigDecimal overdraftLimit, final boolean enforceMinRequiredBalance,
-            final BigDecimal minRequiredBalance, BigDecimal minBalanceForInterestCalculation) {
+            final BigDecimal minRequiredBalance, BigDecimal minBalanceForInterestCalculation, boolean syncInterestPostingWithMeeting) {
 
         this.name = name;
         this.shortName = shortName;
@@ -239,6 +245,7 @@ public class SavingsProduct extends AbstractPersistable<Long> {
         this.enforceMinRequiredBalance = enforceMinRequiredBalance;
         this.minRequiredBalance = minRequiredBalance;
         this.minBalanceForInterestCalculation = minBalanceForInterestCalculation;
+        this.syncInterestPostingWithMeeting = syncInterestPostingWithMeeting;
     }
 
     public MonetaryCurrency currency() {
@@ -447,6 +454,12 @@ public class SavingsProduct extends AbstractPersistable<Long> {
             this.minBalanceForInterestCalculation = newValue;
         }
 
+        if (command.isChangeInBooleanParameterNamed(syncInterestPostingWithMeetingParamName, this.syncInterestPostingWithMeeting)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(syncInterestPostingWithMeetingParamName);
+            actualChanges.put(syncInterestPostingWithMeetingParamName, newValue);
+            this.syncInterestPostingWithMeeting = newValue;
+        }
+
         validateLockinDetails();
 
         return actualChanges;
@@ -551,6 +564,14 @@ public class SavingsProduct extends AbstractPersistable<Long> {
 
     public BigDecimal minBalanceForInterestCalculation() {
         return this.minBalanceForInterestCalculation;
+    }
+
+    public boolean isSyncInterestPostingWithMeetingEnabled() {
+        return this.syncInterestPostingWithMeeting;
+    }
+
+    public boolean isPostInterestAsPerFinancialYearEnabled() {
+        return true;
     }
 
 }

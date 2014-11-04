@@ -76,7 +76,7 @@ public class FixedDepositProduct extends SavingsProduct {
             final SavingsInterestCalculationDaysInYearType interestCalculationDaysInYearType, final Integer lockinPeriodFrequency,
             final SavingsPeriodFrequencyType lockinPeriodFrequencyType, final AccountingRuleType accountingRuleType,
             final Set<Charge> charges, final DepositProductTermAndPreClosure productTermAndPreClosure, final Set<InterestRateChart> charts,
-            BigDecimal minBalanceForInterestCalculation) {
+            BigDecimal minBalanceForInterestCalculation, final boolean syncInterestPostingWithMeeting) {
 
         final BigDecimal minRequiredOpeningBalance = null;
         final boolean withdrawalFeeApplicableForTransfer = false;
@@ -86,7 +86,8 @@ public class FixedDepositProduct extends SavingsProduct {
         return new FixedDepositProduct(name, shortName, description, currency, interestRate, interestCompoundingPeriodType,
                 interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges,
-                productTermAndPreClosure, charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation);
+                productTermAndPreClosure, charts, allowOverdraft, overdraftLimit, minBalanceForInterestCalculation,
+                syncInterestPostingWithMeeting);
     }
 
     protected FixedDepositProduct(final String name, final String shortName, final String description, final MonetaryCurrency currency,
@@ -96,12 +97,13 @@ public class FixedDepositProduct extends SavingsProduct {
             final Integer lockinPeriodFrequency, final SavingsPeriodFrequencyType lockinPeriodFrequencyType,
             final boolean withdrawalFeeApplicableForTransfer, final AccountingRuleType accountingRuleType, final Set<Charge> charges,
             final DepositProductTermAndPreClosure productTermAndPreClosure, final Set<InterestRateChart> charts,
-            final boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal minBalanceForInterestCalculation) {
+            final boolean allowOverdraft, final BigDecimal overdraftLimit, final BigDecimal minBalanceForInterestCalculation,
+            final boolean syncInterestPostingWithMeeting) {
 
         super(name, shortName, description, currency, interestRate, interestCompoundingPeriodType, interestPostingPeriodType,
                 interestCalculationType, interestCalculationDaysInYearType, minRequiredOpeningBalance, lockinPeriodFrequency,
                 lockinPeriodFrequencyType, withdrawalFeeApplicableForTransfer, accountingRuleType, charges, allowOverdraft, overdraftLimit,
-                minBalanceForInterestCalculation);
+                minBalanceForInterestCalculation, syncInterestPostingWithMeeting);
 
         if (charts != null) {
             this.charts = charts;
@@ -329,6 +331,11 @@ public class FixedDepositProduct extends SavingsProduct {
         }
 
         this.validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
+    }
+
+    @Override
+    public boolean isPostInterestAsPerFinancialYearEnabled() {
+        return this.productTermAndPreClosure.isPostInterestAsPerFinancialYearEnabled();
     }
 
 }

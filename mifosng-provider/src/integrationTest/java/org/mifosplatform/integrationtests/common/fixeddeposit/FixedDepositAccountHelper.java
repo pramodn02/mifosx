@@ -187,6 +187,12 @@ public class FixedDepositAccountHelper {
         final HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "summary");
         return response;
     }
+    
+    public HashMap getDetails(final Integer accountID) {
+        final String URL = FIXED_DEPOSIT_ACCOUNT_URL + "/" + accountID + "?associations=all&" + Utils.TENANT_IDENTIFIER;
+        final HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "");
+        return response;
+    }
 
     public static Float getInterestRate(ArrayList<ArrayList<HashMap>> interestSlabData, Integer depositPeriod) {
 

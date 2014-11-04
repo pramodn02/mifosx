@@ -36,4 +36,6 @@ public interface DepositAccountDomainService {
 
     Long handleRDAccountPreMatureClosure(RecurringDepositAccount account, PaymentDetail paymentDetail, AppUser user, JsonCommand command,
             LocalDate tenantsTodayDate, Map<String, Object> changes);
+
+    void updateCalendarDetailsForInterestRecalculation(SavingsAccount savingsAccount, LocalDate calendarStartDate);
 }

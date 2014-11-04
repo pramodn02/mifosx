@@ -45,7 +45,10 @@ public class GroupSavingsIntegrationTest {
     public static final String WITHDRAW_AMOUNT = "1000";
     public static final String WITHDRAW_AMOUNT_ADJUSTED = "500";
     public static final String MINIMUM_OPENING_BALANCE = "1000.0";
+    public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
     public static final String ACCOUNT_TYPE_GROUP = "GROUP";
+    public static final String ACCOUNT_TYPE_JLG = "JLG";
+    private final String CALENDAR_START_DATE = "06 July 2014";
 
     private ResponseSpecification responseSpec;
     private RequestSpecification requestSpec;
@@ -66,11 +69,11 @@ public class GroupSavingsIntegrationTest {
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
 
-        Integer groupID = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
-        Assert.assertNotNull(groupID);
+        Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
 
-        groupID = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupID.toString(), clientID.toString());
-        Assert.assertNotNull(groupID);
+        groupId = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
 
         final String minBalanceForInterestCalculation = null;
         final String minRequiredBalance = null;
@@ -79,10 +82,12 @@ public class GroupSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupID, savingsProductID, ACCOUNT_TYPE_GROUP);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupId, groupId, savingsProductID,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertNotNull(savingsId);
 
-        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(groupID, savingsProductID, savingsId, ACCOUNT_TYPE_GROUP);
+        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(groupId, groupId, savingsProductID, savingsId,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertTrue(modifications.containsKey("submittedOnDate"));
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -116,11 +121,11 @@ public class GroupSavingsIntegrationTest {
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
 
-        Integer groupID = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
-        Assert.assertNotNull(groupID);
+        Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
 
-        groupID = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupID.toString(), clientID.toString());
-        Assert.assertNotNull(groupID);
+        groupId = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
 
         final String minBalanceForInterestCalculation = null;
         final String minRequiredBalance = "1000.0";
@@ -129,7 +134,8 @@ public class GroupSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupID, savingsProductID, ACCOUNT_TYPE_GROUP);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupId, groupId, savingsProductID,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertNotNull(savingsId);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -151,7 +157,7 @@ public class GroupSavingsIntegrationTest {
                 savingsAccountErrorData.get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
 
         withdrawBalance = "true";
-        savingsStatusHashMap =  this.savingsAccountHelper.closeSavingsAccount(savingsId, withdrawBalance);
+        savingsStatusHashMap = this.savingsAccountHelper.closeSavingsAccount(savingsId, withdrawBalance);
         SavingsStatusChecker.verifySavingsAccountIsClosed(savingsStatusHashMap);
     }
 
@@ -166,11 +172,11 @@ public class GroupSavingsIntegrationTest {
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
 
-        Integer groupID = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
-        Assert.assertNotNull(groupID);
+        Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
 
-        groupID = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupID.toString(), clientID.toString());
-        Assert.assertNotNull(groupID);
+        groupId = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
 
         final String minBalanceForInterestCalculation = null;
         final String minRequiredBalance = null;
@@ -179,7 +185,8 @@ public class GroupSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupID, savingsProductID, ACCOUNT_TYPE_GROUP);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupId, groupId, savingsProductID,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertNotNull(savingsId);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -215,11 +222,11 @@ public class GroupSavingsIntegrationTest {
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
 
-        Integer groupID = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
-        Assert.assertNotNull(groupID);
+        Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
 
-        groupID = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupID.toString(), clientID.toString());
-        Assert.assertNotNull(groupID);
+        groupId = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
 
         final String minBalanceForInterestCalculation = null;
         final String minRequiredBalance = null;
@@ -228,7 +235,8 @@ public class GroupSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupID, savingsProductID, ACCOUNT_TYPE_GROUP);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupId, groupId, savingsProductID,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertNotNull(savingsId);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -265,11 +273,11 @@ public class GroupSavingsIntegrationTest {
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
 
-        Integer groupID = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
-        Assert.assertNotNull(groupID);
+        Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
 
-        groupID = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupID.toString(), clientID.toString());
-        Assert.assertNotNull(groupID);
+        groupId = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
 
         final String minBalanceForInterestCalculation = null;
         final String minRequiredBalance = null;
@@ -278,7 +286,8 @@ public class GroupSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupID, savingsProductID, ACCOUNT_TYPE_GROUP);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupId, groupId, savingsProductID,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertNotNull(savingsId);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -299,11 +308,11 @@ public class GroupSavingsIntegrationTest {
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
 
-        Integer groupID = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
-        Assert.assertNotNull(groupID);
+        Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
 
-        groupID = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupID.toString(), clientID.toString());
-        Assert.assertNotNull(groupID);
+        groupId = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
 
         final String minBalanceForInterestCalculation = null;
         final String minRequiredBalance = null;
@@ -312,7 +321,8 @@ public class GroupSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupID, savingsProductID, ACCOUNT_TYPE_GROUP);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupId, groupId, savingsProductID,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertNotNull(savingsId);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -403,11 +413,11 @@ public class GroupSavingsIntegrationTest {
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
         Assert.assertNotNull(clientID);
 
-        Integer groupID = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
-        Assert.assertNotNull(groupID);
+        Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
 
-        groupID = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupID.toString(), clientID.toString());
-        Assert.assertNotNull(groupID);
+        groupId = GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
 
         final String minBalanceForInterestCalculation = null;
         final String minRequiredBalance = null;
@@ -416,7 +426,8 @@ public class GroupSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupID, savingsProductID, ACCOUNT_TYPE_GROUP);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(groupId, groupId, savingsProductID,
+                ACCOUNT_TYPE_GROUP);
         Assert.assertNotNull(savingsId);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -487,10 +498,11 @@ public class GroupSavingsIntegrationTest {
         BigDecimal totalWaiveAmount = BigDecimal.valueOf(Double.valueOf((Float) savingsChargeForWaive.get("amount")));
         totalWaiveAmount = totalWaiveAmount.add(totalWaiveAmount);
         assertEquals(totalWaiveAmount.floatValue(), waiveCharge.get("amountWaived"));
-        
-        final Integer weeklyFeeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec, ChargesHelper.getSavingsWeeklyFeeJSON());
+
+        final Integer weeklyFeeId = ChargesHelper.createCharges(this.requestSpec, this.responseSpec,
+                ChargesHelper.getSavingsWeeklyFeeJSON());
         Assert.assertNotNull(weeklyFeeId);
-        
+
         this.savingsAccountHelper.addChargesForSavings(savingsId, weeklyFeeId);
         charges = this.savingsAccountHelper.getSavingsCharges(savingsId);
         Assert.assertEquals(3, charges.size());
@@ -518,9 +530,194 @@ public class GroupSavingsIntegrationTest {
         assertEquals(expectedNextDueDate, nextDueDate);
     }
 
+    @Test
+    public void testSavingsAccountWithSyncInterestWithMeeting_AS_FALSE() {
+        this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+
+        final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        final Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
+
+        GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
+
+        GroupHelper.attachMeeting(requestSpec, responseSpec, groupId.toString(), GroupHelper.CALENDAR_FREQUENCY_MONTHLY, "1",
+                CALENDAR_START_DATE);
+
+        Assert.assertNotNull(clientID);
+        final String minBalanceForInterestCalculation = "5000";
+        final String minRequiredBalance = null;
+        final String enforceMinRequiredBalance = "false";
+        final boolean allowOverdraft = false;
+        final String syncInterestPostingWithMeeting = "false";
+        final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE,
+                minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, syncInterestPostingWithMeeting);
+        Assert.assertNotNull(savingsProductID);
+
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+
+        Calendar todaysDate = Calendar.getInstance();
+        todaysDate.add(Calendar.MONTH, -3);
+        System.out.println(dateFormat.format(todaysDate.getTime()));
+        todaysDate.set(Calendar.DAY_OF_MONTH, 1);
+        final String SAVINGS_ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
+
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplicationOnDate(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_JLG, SAVINGS_ACTIVATION_DATE);
+        Assert.assertNotNull(savingsProductID);
+
+        HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
+        SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.approveSavingsOnDate(savingsId, SAVINGS_ACTIVATION_DATE);
+        SavingsStatusChecker.verifySavingsIsApproved(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.activateSavingsAccount(savingsId, SAVINGS_ACTIVATION_DATE);
+        SavingsStatusChecker.verifySavingsIsActive(savingsStatusHashMap);
+
+        this.savingsAccountHelper.postInterestForSavings(savingsId);
+
+        HashMap savingsDetails = this.savingsAccountHelper.getSavingsDetails(savingsId);
+
+        @SuppressWarnings("unchecked")
+        List<HashMap> transactions = (List<HashMap>) savingsDetails.get("transactions");
+        for (HashMap transaction : transactions) {
+            HashMap transactionType = (HashMap) transaction.get("transactionType");
+            if ((Boolean) transactionType.get("interestPosting")) {
+                List transactionDate = (List) transaction.get("date");
+                assertEquals(1, transactionDate.get(2));
+            }
+        }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSavingsAccountWithSyncInterestWithMeeting_AS_TRUE() {
+        this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final ResponseSpecification errorResponse = new ResponseSpecBuilder().expectStatusCode(400).build();
+        final SavingsAccountHelper validationErrorHelper = new SavingsAccountHelper(this.requestSpec, errorResponse);
+
+        final String minBalanceForInterestCalculation = "5000";
+        final String minRequiredBalance = null;
+        final String enforceMinRequiredBalance = "false";
+        final boolean allowOverdraft = false;
+        final String syncInterestPostingWithMeeting = "true";
+        final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE,
+                minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, syncInterestPostingWithMeeting);
+        Assert.assertNotNull(savingsProductID);
+
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+
+        Calendar todaysDate = Calendar.getInstance();
+        todaysDate.add(Calendar.MONTH, -3);
+        System.out.println(dateFormat.format(todaysDate.getTime()));
+        todaysDate.set(Calendar.DAY_OF_MONTH, 1);
+        final String SAVINGS_ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
+
+        final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        Assert.assertNotNull(clientID);
+        ArrayList<HashMap> savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.applyForSavingsApplicationOnDate(clientID,
+                null, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL, SAVINGS_ACTIVATION_DATE, CommonConstants.RESPONSE_ERROR);
+        assertEquals("validation.msg.savingsaccount.syncInterestPostingWithMeeting.group.not.found",
+                savingsAccountErrorData.get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
+
+        final Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
+
+        GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
+
+        savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.applyForSavingsApplicationOnDate(clientID, groupId,
+                savingsProductID, ACCOUNT_TYPE_JLG, SAVINGS_ACTIVATION_DATE, CommonConstants.RESPONSE_ERROR);
+        assertEquals("validation.msg.savingsaccount.syncInterestPostingWithMeeting.calendar.not.found",
+                savingsAccountErrorData.get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
+
+        GroupHelper.attachMeeting(requestSpec, responseSpec, groupId.toString(), GroupHelper.CALENDAR_FREQUENCY_MONTHLY, "1",
+                CALENDAR_START_DATE);
+
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplicationOnDate(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_JLG, SAVINGS_ACTIVATION_DATE);
+        Assert.assertNotNull(savingsProductID);
+
+        HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
+        SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.approveSavingsOnDate(savingsId, SAVINGS_ACTIVATION_DATE);
+        SavingsStatusChecker.verifySavingsIsApproved(savingsStatusHashMap);
+
+        savingsStatusHashMap = this.savingsAccountHelper.activateSavingsAccount(savingsId, SAVINGS_ACTIVATION_DATE);
+        SavingsStatusChecker.verifySavingsIsActive(savingsStatusHashMap);
+
+        this.savingsAccountHelper.postInterestForSavings(savingsId);
+
+        HashMap savingsDetails = this.savingsAccountHelper.getSavingsDetails(savingsId);
+
+        List<HashMap> transactions = (List<HashMap>) savingsDetails.get("transactions");
+        for (HashMap transaction : transactions) {
+            HashMap transactionType = (HashMap) transaction.get("transactionType");
+            if ((Boolean) transactionType.get("interestPosting")) {
+                List transactionDate = (List) transaction.get("date");
+                assertEquals(6, transactionDate.get(2));
+            }
+        }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testSavingsAccountWithSyncInterestWithMeeting_AS_TRUE_NOT_SYNC_WITH_POSTING_TYPE() {
+        this.savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
+        final ResponseSpecification errorResponse = new ResponseSpecBuilder().expectStatusCode(400).build();
+        final SavingsAccountHelper validationErrorHelper = new SavingsAccountHelper(this.requestSpec, errorResponse);
+
+        final String minBalanceForInterestCalculation = "5000";
+        final String minRequiredBalance = null;
+        final String enforceMinRequiredBalance = "false";
+        final boolean allowOverdraft = false;
+        final String syncInterestPostingWithMeeting = "true";
+        final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, MINIMUM_OPENING_BALANCE,
+                minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, syncInterestPostingWithMeeting);
+        Assert.assertNotNull(savingsProductID);
+
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy");
+
+        Calendar todaysDate = Calendar.getInstance();
+        todaysDate.add(Calendar.MONTH, -3);
+        System.out.println(dateFormat.format(todaysDate.getTime()));
+        todaysDate.set(Calendar.DAY_OF_MONTH, 1);
+        final String SAVINGS_ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
+
+        final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        Assert.assertNotNull(clientID);
+
+        final Integer groupId = GroupHelper.createGroup(this.requestSpec, this.responseSpec, true);
+        Assert.assertNotNull(groupId);
+
+        GroupHelper.associateClient(this.requestSpec, this.responseSpec, groupId.toString(), clientID.toString());
+        Assert.assertNotNull(groupId);
+
+        GroupHelper.attachMeeting(requestSpec, responseSpec, groupId.toString(), GroupHelper.CALENDAR_FREQUENCY_MONTHLY, "2",
+                CALENDAR_START_DATE);
+
+        ArrayList<HashMap> savingsAccountErrorData = (ArrayList<HashMap>) validationErrorHelper.applyForSavingsApplicationOnDate(clientID,
+                groupId, savingsProductID, ACCOUNT_TYPE_JLG, SAVINGS_ACTIVATION_DATE, CommonConstants.RESPONSE_ERROR);
+        assertEquals("validation.msg.savingsaccount.syncInterestPostingWithMeeting.interest.posting.not.same.as.meeting.frequency",
+                savingsAccountErrorData.get(0).get(CommonConstants.RESPONSE_ERROR_MESSAGE_CODE));
+
+    }
+
     public static Integer createSavingsProduct(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
             final String minOpenningBalance, final String minBalanceForInterestCalculation, final String minRequiredBalance,
             final String enforceMinRequiredBalance) {
+        final String syncInterestPostingWithMeeting = "false";
+        return createSavingsProduct(requestSpec, responseSpec, minOpenningBalance, minBalanceForInterestCalculation, minRequiredBalance,
+                enforceMinRequiredBalance, syncInterestPostingWithMeeting);
+    }
+
+    public static Integer createSavingsProduct(final RequestSpecification requestSpec, final ResponseSpecification responseSpec,
+            final String minOpenningBalance, final String minBalanceForInterestCalculation, final String minRequiredBalance,
+            final String enforceMinRequiredBalance, final String syncInterestPostingWithMeeting) {
         System.out.println("------------------------------CREATING NEW SAVINGS PRODUCT ---------------------------------------");
         SavingsProductHelper savingsProductHelper = new SavingsProductHelper();
         final String savingsProductJSON = savingsProductHelper //
@@ -530,6 +727,7 @@ public class GroupSavingsIntegrationTest {
                 .withMinBalanceForInterestCalculation(minBalanceForInterestCalculation) //
                 .withMinRequiredBalance(minRequiredBalance) //
                 .withEnforceMinRequiredBalance(enforceMinRequiredBalance) //
+                .withSyncInterestPostingWithMeeting(syncInterestPostingWithMeeting)//
                 .withMinimumOpenningBalance(minOpenningBalance).build();
         return SavingsProductHelper.createSavingsProduct(savingsProductJSON, requestSpec, responseSpec);
     }

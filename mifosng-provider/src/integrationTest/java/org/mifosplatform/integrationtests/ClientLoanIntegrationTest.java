@@ -1164,8 +1164,9 @@ public class ClientLoanIntegrationTest {
         Assert.assertNotNull(savingsProductID);
 
         SavingsAccountHelper savingsAccountHelper = new SavingsAccountHelper(this.requestSpec, this.responseSpec);
-
-        final Integer savingsId = savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer groupId = null;
+        final Integer savingsId = savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);

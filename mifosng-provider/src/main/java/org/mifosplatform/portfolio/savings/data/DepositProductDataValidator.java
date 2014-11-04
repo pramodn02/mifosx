@@ -227,7 +227,7 @@ public class DepositProductDataValidator {
                 element);
         baseDataValidator.reset().parameter(interestPostingPeriodTypeParamName).value(interestPostingPeriodType).notNull()
                 .isOneOfTheseValues(SavingsPostingInterestPeriodType.integerValues());
-
+        
         final Integer interestCalculationType = fromApiJsonHelper.extractIntegerSansLocaleNamed(interestCalculationTypeParamName, element);
         baseDataValidator.reset().parameter(interestCalculationTypeParamName).value(interestCalculationType).notNull()
                 .isOneOfTheseValues(SavingsInterestCalculationType.integerValues());

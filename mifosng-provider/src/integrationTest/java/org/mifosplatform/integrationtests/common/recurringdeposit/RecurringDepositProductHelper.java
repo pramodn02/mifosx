@@ -82,6 +82,7 @@ public class RecurringDepositProductHelper {
     private final String minDepositAmount = "100";
     private final String maxDepositAmount = "1000000";
     private Account[] accountList = null;
+    private boolean postInterestAsPerFinancialYear = false;
 
     public String build(final String validFrom, final String validTo) {
         final HashMap<String, Object> map = new HashMap<>();
@@ -164,6 +165,7 @@ public class RecurringDepositProductHelper {
         map.put("depositAmount", this.depositAmount);
         map.put("minDepositAmount", this.minDepositAmount);
         map.put("maxDepositAmount", this.maxDepositAmount);
+        map.put("postInterestAsPerFinancialYear", postInterestAsPerFinancialYear);
 
         if (this.accountingRule.equals(CASH_BASED)) {
             map.putAll(getAccountMappingForCashBased());
@@ -182,6 +184,11 @@ public class RecurringDepositProductHelper {
     public RecurringDepositProductHelper withAccountingRuleAsCashBased(final Account[] account_list) {
         this.accountingRule = CASH_BASED;
         this.accountList = account_list;
+        return this;
+    }
+
+    public RecurringDepositProductHelper withPostInterestAsPerFinancialYear(final boolean postInterestAsPerFinancialYear) {
+        this.postInterestAsPerFinancialYear = postInterestAsPerFinancialYear;
         return this;
     }
 

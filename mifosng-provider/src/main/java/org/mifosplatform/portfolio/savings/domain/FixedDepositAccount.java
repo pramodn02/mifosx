@@ -174,9 +174,8 @@ public class FixedDepositAccount extends SavingsAccount {
         return applicableInterestRate.divide(BigDecimal.valueOf(100l), mc);
     }
 
-    public void updateMaturityDateAndAmountBeforeAccountActivation(final MathContext mc,
-    		final boolean isPreMatureClosure, final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+    public void updateMaturityDateAndAmountBeforeAccountActivation(final MathContext mc, final boolean isPreMatureClosure,
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         List<SavingsAccountTransaction> allTransactions = new ArrayList<>();
         final Money transactionAmountMoney = Money.of(getCurrency(), this.accountTermAndPreClosure.depositAmount());
         final SavingsAccountTransaction transaction = SavingsAccountTransaction.deposit(null, office(), null,
@@ -184,20 +183,17 @@ public class FixedDepositAccount extends SavingsAccount {
         transaction.updateRunningBalance(transactionAmountMoney);
         transaction.updateCumulativeBalanceAndDates(this.getCurrency(), interestCalculatedUpto());
         allTransactions.add(transaction);
-        updateMaturityDateAndAmount(mc, allTransactions, isPreMatureClosure,
-        		isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+        updateMaturityDateAndAmount(mc, allTransactions, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd);
     }
 
     public void updateMaturityDateAndAmount(final MathContext mc, final boolean isPreMatureClosure,
-    		final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         updateMaturityDateAndAmount(mc, retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure,
-        		isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+                isSavingsInterestPostingAtCurrentPeriodEnd);
     }
 
     public void updateMaturityDateAndAmount(final MathContext mc, final List<SavingsAccountTransaction> transactions,
-            final boolean isPreMatureClosure, final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-            final Integer financialYearBeginningMonth) {
+            final boolean isPreMatureClosure, final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         final LocalDate maturityDate = calculateMaturityDate();
         final LocalDate interestCalculationUpto = maturityDate.minusDays(1);
 
@@ -205,9 +201,8 @@ public class FixedDepositAccount extends SavingsAccount {
         // calculation
         this.resetAccountTransactionsEndOfDayBalances(transactions, maturityDate);
 
-        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, interestCalculationUpto,
-        		transactions, isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
-        		financialYearBeginningMonth);
+        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, interestCalculationUpto, transactions, isPreMatureClosure,
+                isSavingsInterestPostingAtCurrentPeriodEnd);
 
         // reset end of day balance back to today's date
         this.resetAccountTransactionsEndOfDayBalances(transactions, DateUtils.getLocalDateOfTenant());
@@ -222,8 +217,7 @@ public class FixedDepositAccount extends SavingsAccount {
         this.accountTermAndPreClosure.updateMaturityDetails(maturityAmount.getAmount(), maturityDate);
     }
 
-    public void updateMaturityStatus(final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+    public void updateMaturityStatus(final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(FIXED_DEPOSIT_ACCOUNT_RESOURCE_NAME + SavingsApiConstants.updateMaturityDetailsAction);
@@ -238,8 +232,7 @@ public class FixedDepositAccount extends SavingsAccount {
         if (!this.maturityDate().isAfter(todayDate)) {
             // update account status
             this.status = SavingsAccountStatusType.MATURED.getValue();
-            postMaturityInterest(isSavingsInterestPostingAtCurrentPeriodEnd,
-            		financialYearBeginningMonth);
+            postMaturityInterest(isSavingsInterestPostingAtCurrentPeriodEnd);
         }
     }
 
@@ -270,10 +263,7 @@ public class FixedDepositAccount extends SavingsAccount {
 
     private List<PostingPeriod> calculateInterestPayable(final MathContext mc, final LocalDate maturityDate,
             final List<SavingsAccountTransaction> transactions, final boolean isPreMatureClosure,
-            final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-            final Integer financialYearBeginningMonth) {
-
-        final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
 
         final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
                 .fromInt(this.interestCompoundingPeriodType);
@@ -282,8 +272,7 @@ public class FixedDepositAccount extends SavingsAccount {
                 .fromInt(this.interestCalculationDaysInYearType);
 
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
-                accountSubmittedOrActivationDate(), maturityDate, postingPeriodType,
-                financialYearBeginningMonth);
+                accountSubmittedOrActivationDate(), maturityDate, this.getId());
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -470,14 +459,12 @@ public class FixedDepositAccount extends SavingsAccount {
         // this.savingsAccountTransactionSummaryWrapper, this.transactions);
     }
 
-    public void postMaturityInterest(final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+    public void postMaturityInterest(final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         final LocalDate interestPostingUpToDate = maturityDate();
         final MathContext mc = MathContext.DECIMAL64;
         final boolean isInterestTransfer = false;
-        final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate,
-        		isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-        		financialYearBeginningMonth);
+        final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer,
+                isSavingsInterestPostingAtCurrentPeriodEnd);
 
         Money interestPostedToDate = Money.zero(this.currency);
 
@@ -522,16 +509,13 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     public void postPreMaturityInterest(final LocalDate accountCloseDate, final boolean isPreMatureClosure,
-    		final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
 
         Money interestPostedToDate = totalInterestPosted();
         // calculate interest before one day of closure date
         final LocalDate interestCalculatedToDate = accountCloseDate.minusDays(1);
         final Money interestOnMaturity = calculatePreMatureInterest(interestCalculatedToDate,
-                retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure,
-                isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth);
+                retreiveOrderedNonInterestPostingTransactions(), isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd);
         boolean recalucateDailyBalance = false;
 
         // post remaining interest
@@ -554,14 +538,12 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     public BigDecimal calculatePreMatureAmount(final LocalDate preMatureDate, final boolean isPreMatureClosure,
-    		final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
 
         final Money interestPostedToDate = totalInterestPosted().copy();
 
         final Money interestEarnedTillDate = calculatePreMatureInterest(preMatureDate, retreiveOrderedNonInterestPostingTransactions(),
-                isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
-                financialYearBeginningMonth);
+                isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd);
 
         final Money accountBalance = Money.of(getCurrency(), getAccountBalance());
         final Money maturityAmount = accountBalance.minus(interestPostedToDate).plus(interestEarnedTillDate);
@@ -570,12 +552,10 @@ public class FixedDepositAccount extends SavingsAccount {
     }
 
     private Money calculatePreMatureInterest(final LocalDate preMatureDate, final List<SavingsAccountTransaction> transactions,
-            final boolean isPreMatureClosure, final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-            final Integer financialYearBeginningMonth) {
+            final boolean isPreMatureClosure, final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         final MathContext mc = MathContext.DECIMAL64;
-        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, preMatureDate, transactions,
-        		isPreMatureClosure, isSavingsInterestPostingAtCurrentPeriodEnd,
-        		financialYearBeginningMonth);
+        final List<PostingPeriod> postingPeriods = calculateInterestPayable(mc, preMatureDate, transactions, isPreMatureClosure,
+                isSavingsInterestPostingAtCurrentPeriodEnd);
 
         Money interestOnMaturity = Money.zero(this.currency);
 
@@ -589,22 +569,16 @@ public class FixedDepositAccount extends SavingsAccount {
 
     @Override
     public void postInterest(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
-    		final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
-		super.postInterest(mc, interestPostingUpToDate, isInterestTransfer,
-				isSavingsInterestPostingAtCurrentPeriodEnd,
-				financialYearBeginningMonth);
- }
+        super.postInterest(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd);
+    }
 
     @Override
-    public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate,
-    		boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+    public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate postingDate, boolean isInterestTransfer,
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         final LocalDate interestPostingUpToDate = interestPostingUpToDate(postingDate);
-        return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer,
-        		isSavingsInterestPostingAtCurrentPeriodEnd,
-        		financialYearBeginningMonth);
+        return super.calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd);
     }
 
     private LocalDate interestPostingUpToDate(final LocalDate interestPostingDate) {

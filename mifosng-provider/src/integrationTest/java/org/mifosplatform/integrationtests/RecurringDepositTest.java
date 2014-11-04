@@ -310,10 +310,12 @@ public class RecurringDepositTest {
                 assetAccount, liabilityAccount, incomeAccount, expenseAccount);
         Assert.assertNotNull(savingsProductID);
 
+        final Integer groupId = null;
         /***
          * Create Savings account and verify status is pending
          */
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientId, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientId, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -2483,10 +2485,140 @@ public class RecurringDepositTest {
 
     }
 
+    @Test
+    public void testRecurringDepositMonthlyPosting_POSTING_FROM_ACTIVATION_DATE() {
+        this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
+        this.recurringDepositAccountHelper = new RecurringDepositAccountHelper(this.requestSpec, this.responseSpec);
+
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
+        DateFormat monthDayFormat = new SimpleDateFormat("dd MMM", Locale.US);
+        DateFormat currentDateFormat = new SimpleDateFormat("dd");
+
+        Calendar todaysDate = Calendar.getInstance();
+        todaysDate.add(Calendar.MONTH, -3);
+        final String VALID_FROM = dateFormat.format(todaysDate.getTime());
+        todaysDate.add(Calendar.YEAR, 10);
+        final String VALID_TO = dateFormat.format(todaysDate.getTime());
+
+        todaysDate = Calendar.getInstance();
+        todaysDate.add(Calendar.MONTH, -1);
+        todaysDate.set(Calendar.DAY_OF_MONTH, 1);
+        final String SUBMITTED_ON_DATE = dateFormat.format(todaysDate.getTime());
+        todaysDate.add(Calendar.DAY_OF_MONTH, 1);
+        final String APPROVED_ON_DATE = dateFormat.format(todaysDate.getTime());
+        todaysDate.add(Calendar.DAY_OF_MONTH, 1);
+        final String ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
+
+        Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        Assert.assertNotNull(clientId);
+
+        final String accountingRule = NONE;
+        Integer depositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule, false);
+        Assert.assertNotNull(depositProductId);
+
+        Integer depositAccountId = applyForRecurringDepositApplication(clientId.toString(), depositProductId.toString(), VALID_FROM,
+                VALID_TO, SUBMITTED_ON_DATE, WHOLE_TERM, ACTIVATION_DATE);
+        Assert.assertNotNull(depositAccountId);
+        HashMap depositAccountStatusHashMap = RecurringDepositAccountStatusChecker.getStatusOfRecurringDepositAccount(this.requestSpec,
+                this.responseSpec, depositAccountId.toString());
+        RecurringDepositAccountStatusChecker.verifyRecurringDepositIsPending(depositAccountStatusHashMap);
+
+        depositAccountStatusHashMap = this.recurringDepositAccountHelper.approveRecurringDeposit(depositAccountId, APPROVED_ON_DATE);
+        RecurringDepositAccountStatusChecker.verifyRecurringDepositIsApproved(depositAccountStatusHashMap);
+
+        depositAccountStatusHashMap = this.recurringDepositAccountHelper.activateRecurringDeposit(depositAccountId, ACTIVATION_DATE);
+        RecurringDepositAccountStatusChecker.verifyRecurringDepositIsActive(depositAccountStatusHashMap);
+
+        Integer depositTransactionId = this.recurringDepositAccountHelper.depositToRecurringDepositAccount(depositAccountId, 2000.0f,
+                ACTIVATION_DATE);
+        Assert.assertNotNull(depositTransactionId);
+
+        this.recurringDepositAccountHelper.postInterestForRecurringDeposit(depositAccountId);
+
+        HashMap savingsDetails = this.recurringDepositAccountHelper.getDetails(depositAccountId);
+
+        List<HashMap> transactions = (List<HashMap>) savingsDetails.get("transactions");
+        for (HashMap transaction : transactions) {
+            HashMap transactionType = (HashMap) transaction.get("transactionType");
+            if ((Boolean) transactionType.get("interestPosting")) {
+                List transactionDate = (List) transaction.get("date");
+                assertEquals(3, transactionDate.get(2));
+            }
+        }
+    }
+
+    @Test
+    public void testRecurringDepositMonthlyPosting_POSTING_FROM_FINANCIAL_DATE() {
+        this.recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
+        this.recurringDepositAccountHelper = new RecurringDepositAccountHelper(this.requestSpec, this.responseSpec);
+
+        DateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.US);
+        DateFormat monthDayFormat = new SimpleDateFormat("dd MMM", Locale.US);
+        DateFormat currentDateFormat = new SimpleDateFormat("dd");
+
+        Calendar todaysDate = Calendar.getInstance();
+        todaysDate.add(Calendar.MONTH, -3);
+        final String VALID_FROM = dateFormat.format(todaysDate.getTime());
+        todaysDate.add(Calendar.YEAR, 10);
+        final String VALID_TO = dateFormat.format(todaysDate.getTime());
+
+        todaysDate = Calendar.getInstance();
+        todaysDate.add(Calendar.MONTH, -1);
+        todaysDate.set(Calendar.DAY_OF_MONTH, 1);
+        final String SUBMITTED_ON_DATE = dateFormat.format(todaysDate.getTime());
+        todaysDate.add(Calendar.DAY_OF_MONTH, 1);
+        final String APPROVED_ON_DATE = dateFormat.format(todaysDate.getTime());
+        todaysDate.add(Calendar.DAY_OF_MONTH, 1);
+        final String ACTIVATION_DATE = dateFormat.format(todaysDate.getTime());
+
+        Integer clientId = ClientHelper.createClient(this.requestSpec, this.responseSpec);
+        Assert.assertNotNull(clientId);
+
+        final String accountingRule = NONE;
+        Integer depositProductId = createRecurringDepositProduct(VALID_FROM, VALID_TO, accountingRule, true);
+        Assert.assertNotNull(depositProductId);
+
+        Integer depositAccountId = applyForRecurringDepositApplication(clientId.toString(), depositProductId.toString(), VALID_FROM,
+                VALID_TO, SUBMITTED_ON_DATE, WHOLE_TERM, ACTIVATION_DATE);
+        Assert.assertNotNull(depositAccountId);
+        HashMap depositAccountStatusHashMap = RecurringDepositAccountStatusChecker.getStatusOfRecurringDepositAccount(this.requestSpec,
+                this.responseSpec, depositAccountId.toString());
+        RecurringDepositAccountStatusChecker.verifyRecurringDepositIsPending(depositAccountStatusHashMap);
+
+        depositAccountStatusHashMap = this.recurringDepositAccountHelper.approveRecurringDeposit(depositAccountId, APPROVED_ON_DATE);
+        RecurringDepositAccountStatusChecker.verifyRecurringDepositIsApproved(depositAccountStatusHashMap);
+
+        depositAccountStatusHashMap = this.recurringDepositAccountHelper.activateRecurringDeposit(depositAccountId, ACTIVATION_DATE);
+        RecurringDepositAccountStatusChecker.verifyRecurringDepositIsActive(depositAccountStatusHashMap);
+        Integer depositTransactionId = this.recurringDepositAccountHelper.depositToRecurringDepositAccount(depositAccountId, 2000.0f,
+                ACTIVATION_DATE);
+        Assert.assertNotNull(depositTransactionId);
+
+        this.recurringDepositAccountHelper.postInterestForRecurringDeposit(depositAccountId);
+
+        HashMap savingsDetails = this.recurringDepositAccountHelper.getDetails(depositAccountId);
+
+        List<HashMap> transactions = (List<HashMap>) savingsDetails.get("transactions");
+        for (HashMap transaction : transactions) {
+            HashMap transactionType = (HashMap) transaction.get("transactionType");
+            if ((Boolean) transactionType.get("interestPosting")) {
+                List transactionDate = (List) transaction.get("date");
+                assertEquals(1, transactionDate.get(2));
+            }
+        }
+    }
+
     private Integer createRecurringDepositProduct(final String validFrom, final String validTo, final String accountingRule,
             Account... accounts) {
+        return createRecurringDepositProduct(validFrom, validTo, accountingRule, true, accounts);
+    }
+
+    private Integer createRecurringDepositProduct(final String validFrom, final String validTo, final String accountingRule,
+            boolean postInterestAsPerFinancialYear, Account... accounts) {
         System.out.println("------------------------------CREATING NEW RECURRING DEPOSIT PRODUCT ---------------------------------------");
-        RecurringDepositProductHelper recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec);
+        RecurringDepositProductHelper recurringDepositProductHelper = new RecurringDepositProductHelper(this.requestSpec, this.responseSpec)
+                .withPostInterestAsPerFinancialYear(postInterestAsPerFinancialYear);
+
         if (accountingRule.equals(CASH_BASED)) {
             recurringDepositProductHelper = recurringDepositProductHelper.withAccountingRuleAsCashBased(accounts);
         } else if (accountingRule.equals(NONE)) {

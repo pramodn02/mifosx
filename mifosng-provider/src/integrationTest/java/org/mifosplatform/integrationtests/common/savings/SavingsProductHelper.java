@@ -70,9 +70,10 @@ public class SavingsProductHelper {
     private Account[] accountList = null;
     private String minBalanceForInterestCalculation = null;
     private String allowOverdraft = "false";
-    private String overdraftLimit = null; 
+    private String overdraftLimit = null;
     private String minRequiredBalance = null;
     private String enforceMinRequiredBalance = "false";
+    private String syncInterestPostingWithMeeting = "false";
 
     public String build() {
         final HashMap<String, String> map = new HashMap<>();
@@ -108,6 +109,7 @@ public class SavingsProductHelper {
         map.put("overdraftLimit", this.overdraftLimit);
         map.put("minRequiredBalance", this.minRequiredBalance);
         map.put("enforceMinRequiredBalance", this.enforceMinRequiredBalance);
+        map.put("syncInterestPostingWithMeeting", syncInterestPostingWithMeeting);
 
         if (this.accountingRule.equals(CASH_BASED)) {
             map.putAll(getAccountMappingForCashBased());
@@ -131,7 +133,7 @@ public class SavingsProductHelper {
         this.minRequiredOpeningBalance = minBalance;
         return this;
     }
-    
+
     public SavingsProductHelper withInterestCompoundingPeriodTypeAsMonthly() {
         this.interestCompoundingPeriodType = MONTHLY;
         return this;
@@ -141,7 +143,7 @@ public class SavingsProductHelper {
         this.interestPostingPeriodType = MONTHLY;
         return this;
     }
-    
+
     public SavingsProductHelper withMinBalanceForInterestCalculation(final String amount) {
         this.minBalanceForInterestCalculation = amount;
         return this;
@@ -177,12 +179,12 @@ public class SavingsProductHelper {
         this.accountList = account_list;
         return this;
     }
-    
+
     public SavingsProductHelper withMinRequiredBalance(String minBalance) {
         this.minRequiredBalance = minBalance;
         return this;
     }
-    
+
     public SavingsProductHelper withEnforceMinRequiredBalance(String enforceMinRequiredBalance) {
         this.enforceMinRequiredBalance = enforceMinRequiredBalance;
         return this;
@@ -191,6 +193,11 @@ public class SavingsProductHelper {
     public SavingsProductHelper withOverDraft(final String overDraftLimit) {
         this.allowOverdraft = "true";
         this.overdraftLimit = overDraftLimit;
+        return this;
+    }
+
+    public SavingsProductHelper withSyncInterestPostingWithMeeting(final String syncInterestPostingWithMeeting) {
+        this.syncInterestPostingWithMeeting = syncInterestPostingWithMeeting;
         return this;
     }
 

@@ -187,8 +187,11 @@ public class SavingsApplicationProcessWritePlatformServiceJpaRepositoryImpl impl
             final SavingsAccount account = this.savingAccountAssembler.assembleFrom(savingsId);
             checkClientOrGroupActive(account);
             account.modifyApplication(command, changes);
-            account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), SAVINGS_ACCOUNT_RESOURCE_NAME);
-            account.validateAccountValuesWithProduct();
+            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+            account.validateNewApplicationState(DateUtils.getLocalDateOfTenant(), SAVINGS_ACCOUNT_RESOURCE_NAME, dataValidationErrors);
+
+            account.validateAccountValuesWithProduct(dataValidationErrors);
+            if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
 
             if (!changes.isEmpty()) {
 

@@ -15,15 +15,18 @@ public class SavingsApplicationTestBuilder {
 
     private String submittedOnDate = "";
 
-    public String build(final String ID, final String savingsProductId, final String accountType) {
+    public String build(final Integer clientID, Integer groupID, final String savingsProductId, final String accountType) {
 
         final HashMap<String, String> map = new HashMap<>();
         map.put("dateFormat", "dd MMMM yyyy");
         if (accountType == "GROUP") {
-            map.put("groupId", ID);
-        } else {
-            map.put("clientId", ID);
-        }        
+            map.put("groupId", groupID.toString());
+        } else if (accountType == "JLG") {
+            map.put("groupId", groupID.toString());
+            map.put("clientId", clientID.toString());
+        } else if (accountType == "INDIVIDUAL") {
+            map.put("clientId", clientID.toString());
+        }
         map.put("productId", savingsProductId);
         map.put("locale", LOCALE);
         map.put("submittedOnDate", this.submittedOnDate);

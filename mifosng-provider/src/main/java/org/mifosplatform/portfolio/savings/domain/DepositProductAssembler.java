@@ -37,6 +37,8 @@ import static org.mifosplatform.portfolio.savings.SavingsApiConstants.minBalance
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nameParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.nominalAnnualInterestRateParamName;
 import static org.mifosplatform.portfolio.savings.SavingsApiConstants.shortNameParamName;
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.syncInterestPostingWithMeetingParamName;
+import static org.mifosplatform.portfolio.savings.DepositsApiConstants.postInterestAsPerFinancialYearParamName;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -128,8 +130,12 @@ public class DepositProductAssembler {
         final DepositPreClosureDetail preClosureDetail = this.assemblePreClosureDetail(command);
         final DepositTermDetail depositTermDetail = this.assembleDepositTermDetail(command);
         final DepositProductAmountDetails depositProductAmountDetails = this.assembleDepositAmountDetails(command);
+        boolean postInterestAsPerFinancialYear = false;
+        if (command.parameterExists(postInterestAsPerFinancialYearParamName)) {
+            postInterestAsPerFinancialYear = command.booleanPrimitiveValueOfParameterNamed(postInterestAsPerFinancialYearParamName);
+        }
         final DepositProductTermAndPreClosure productTermAndPreClosure = DepositProductTermAndPreClosure.createNew(preClosureDetail,
-                depositTermDetail, depositProductAmountDetails, null);
+                depositTermDetail, depositProductAmountDetails, null, postInterestAsPerFinancialYear);
 
         // Savings product charges
         final Set<Charge> charges = assembleListOfSavingsProductCharges(command, currencyCode);
@@ -138,10 +144,16 @@ public class DepositProductAssembler {
         if (interestRate == null) {
             interestRate = BigDecimal.ZERO;
         }
+
+        boolean syncInterestPostingWithMeeting = false;
+        if (command.parameterExists(syncInterestPostingWithMeetingParamName)) {
+            syncInterestPostingWithMeeting = command.booleanPrimitiveValueOfParameterNamed(syncInterestPostingWithMeetingParamName);
+        }
+
         FixedDepositProduct fixedDepositProduct = FixedDepositProduct.createNew(name, shortName, description, currency, interestRate,
                 interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType, interestCalculationDaysInYearType,
                 lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, charges, productTermAndPreClosure, charts,
-                minBalanceForInterestCalculation);
+                minBalanceForInterestCalculation, syncInterestPostingWithMeeting);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(fixedDepositProduct);
@@ -204,8 +216,13 @@ public class DepositProductAssembler {
         final DepositPreClosureDetail preClosureDetail = this.assemblePreClosureDetail(command);
         final DepositTermDetail depositTermDetail = this.assembleDepositTermDetail(command);
         final DepositProductAmountDetails depositProductAmountDetails = this.assembleDepositAmountDetails(command);
+        boolean postInterestAsPerFinancialYear = false;
+        if (command.parameterExists(postInterestAsPerFinancialYearParamName)) {
+            postInterestAsPerFinancialYear = command.booleanPrimitiveValueOfParameterNamed(postInterestAsPerFinancialYearParamName);
+        }
+
         final DepositProductTermAndPreClosure productTermAndPreClosure = DepositProductTermAndPreClosure.createNew(preClosureDetail,
-                depositTermDetail, depositProductAmountDetails, null);
+                depositTermDetail, depositProductAmountDetails, null, postInterestAsPerFinancialYear);
         final DepositRecurringDetail recurringDetail = this.assembleRecurringDetail(command);
         final DepositProductRecurringDetail productRecurringDetail = DepositProductRecurringDetail.createNew(recurringDetail, null);
 
@@ -218,10 +235,15 @@ public class DepositProductAssembler {
             interestRate = BigDecimal.ZERO;
         }
 
+        boolean syncInterestPostingWithMeeting = false;
+        if (command.parameterExists(syncInterestPostingWithMeetingParamName)) {
+            syncInterestPostingWithMeeting = command.booleanPrimitiveValueOfParameterNamed(syncInterestPostingWithMeetingParamName);
+        }
+
         RecurringDepositProduct recurringDepositProduct = RecurringDepositProduct.createNew(name, shortName, description, currency,
                 interestRate, interestCompoundingPeriodType, interestPostingPeriodType, interestCalculationType,
                 interestCalculationDaysInYearType, lockinPeriodFrequency, lockinPeriodFrequencyType, accountingRuleType, charges,
-                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation);
+                productTermAndPreClosure, productRecurringDetail, charts, minBalanceForInterestCalculation, syncInterestPostingWithMeeting);
 
         // update product reference
         productTermAndPreClosure.updateProductReference(recurringDepositProduct);

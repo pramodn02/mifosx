@@ -203,6 +203,12 @@ public class RecurringDepositAccountHelper {
         return response;
     }
 
+    public HashMap getDetails(final Integer accountID) {
+        final String URL = RECURRING_DEPOSIT_ACCOUNT_URL + "/" + accountID + "?associations=all&" + Utils.TENANT_IDENTIFIER;
+        final HashMap response = Utils.performServerGet(requestSpec, responseSpec, URL, "");
+        return response;
+    }
+
     public static Float getInterestRate(ArrayList<ArrayList<HashMap>> interestSlabData, Integer depositPeriod) {
 
         Float annualInterestRate = 0.0f;
@@ -218,8 +224,8 @@ public class RecurringDepositAccountHelper {
         return annualInterestRate;
     }
 
-    public static Float getPrincipalAfterCompoundingInterest(Calendar currentDate, Float principal, Float depositAmount, Integer depositPeriod,
-            double interestPerDay, Integer compoundingInterval, Integer postingInterval) {
+    public static Float getPrincipalAfterCompoundingInterest(Calendar currentDate, Float principal, Float depositAmount,
+            Integer depositPeriod, double interestPerDay, Integer compoundingInterval, Integer postingInterval) {
 
         Float totalInterest = 0.0f;
         Float interestEarned = 0.0f;

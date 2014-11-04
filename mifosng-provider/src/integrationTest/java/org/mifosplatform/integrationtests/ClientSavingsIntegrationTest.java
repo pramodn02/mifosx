@@ -47,6 +47,7 @@ public class ClientSavingsIntegrationTest {
     public static final String WITHDRAW_AMOUNT_ADJUSTED = "500";
     public static final String MINIMUM_OPENING_BALANCE = "1000.0";
     public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
+    private final Integer groupId = null;
 
     private ResponseSpecification responseSpec;
     private RequestSpecification requestSpec;
@@ -74,10 +75,11 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
-        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(clientID, savingsProductID, savingsId,
+        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(clientID, groupId, savingsProductID, savingsId,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertTrue(modifications.containsKey("submittedOnDate"));
 
@@ -118,10 +120,11 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
-        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(clientID, savingsProductID, savingsId,
+        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(clientID, groupId, savingsProductID, savingsId,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertTrue(modifications.containsKey("submittedOnDate"));
 
@@ -165,7 +168,8 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -208,7 +212,8 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -274,7 +279,8 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -317,7 +323,8 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -362,7 +369,8 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -390,7 +398,8 @@ public class ClientSavingsIntegrationTest {
                 minBalanceForInterestCalculation, minRequiredBalance, enforceMinRequiredBalance, allowOverdraft);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -492,7 +501,8 @@ public class ClientSavingsIntegrationTest {
         Assert.assertNotNull(savingsProductID);
 
         Assert.assertNotNull(savingsProductID);
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
         SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
@@ -653,10 +663,11 @@ public class ClientSavingsIntegrationTest {
         /***
          * Apply for Savings account
          */
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
-        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(clientID, savingsProductID, savingsId,
+        HashMap modifications = this.savingsAccountHelper.updateSavingsAccount(clientID, groupId, savingsProductID, savingsId,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertTrue(modifications.containsKey("submittedOnDate"));
 

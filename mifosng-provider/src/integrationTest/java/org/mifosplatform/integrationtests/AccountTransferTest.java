@@ -57,6 +57,7 @@ public class AccountTransferTest {
     public static final String LOAN_APPROVAL_DATE = "01 March 2013";
     public static final String LOAN_APPROVAL_DATE_PLUS_ONE = "02 March 2013";
     public static final String LOAN_DISBURSAL_DATE = "01 March 2013";
+    private final Integer groupId = null;
 
     private ResponseSpecification responseSpec;
     private RequestSpecification requestSpec;
@@ -142,7 +143,7 @@ public class AccountTransferTest {
                 incomeAccount, expenseAccount, liabilityAccount);
         Assert.assertNotNull(toSavingsProductID);
 
-        final Integer toSavingsID = this.savingsAccountHelper.applyForSavingsApplication(toClientID, toSavingsProductID,
+        final Integer toSavingsID = this.savingsAccountHelper.applyForSavingsApplication(toClientID, groupId, toSavingsProductID,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(toSavingsProductID);
 
@@ -169,7 +170,7 @@ public class AccountTransferTest {
                 assetAccount, incomeAccount, expenseAccount, liabilityAccount);
         Assert.assertNotNull(fromSavingsProductID);
 
-        final Integer fromSavingsID = this.savingsAccountHelper.applyForSavingsApplication(fromClientID, fromSavingsProductID,
+        final Integer fromSavingsID = this.savingsAccountHelper.applyForSavingsApplication(fromClientID, groupId, fromSavingsProductID,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(fromSavingsID);
 
@@ -267,7 +268,7 @@ public class AccountTransferTest {
                 assetAccount, incomeAccount, expenseAccount, liabilityAccount);
         Assert.assertNotNull(fromSavingsProductID);
 
-        final Integer fromSavingsID = this.savingsAccountHelper.applyForSavingsApplication(fromClientID, fromSavingsProductID,
+        final Integer fromSavingsID = this.savingsAccountHelper.applyForSavingsApplication(fromClientID, groupId, fromSavingsProductID,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(fromSavingsID);
 
@@ -337,7 +338,7 @@ public class AccountTransferTest {
                 incomeAccount, expenseAccount, liabilityAccount);
         Assert.assertNotNull(toSavingsProductID);
 
-        final Integer toSavingsID = this.savingsAccountHelper.applyForSavingsApplication(toClientID, toSavingsProductID,
+        final Integer toSavingsID = this.savingsAccountHelper.applyForSavingsApplication(toClientID, groupId, toSavingsProductID,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(toSavingsID);
 
@@ -377,7 +378,7 @@ public class AccountTransferTest {
                 assetAccount, incomeAccount, expenseAccount, liabilityAccount);
         Assert.assertNotNull(fromSavingsProductID);
 
-        final Integer fromSavingsID = this.savingsAccountHelper.applyForSavingsApplication(fromClientID, fromSavingsProductID,
+        final Integer fromSavingsID = this.savingsAccountHelper.applyForSavingsApplication(fromClientID, groupId, fromSavingsProductID,
                 ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(fromSavingsID);
 

@@ -5,10 +5,7 @@
  */
 package org.mifosplatform.integrationtests.common.fixeddeposit;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +13,6 @@ import java.util.Map;
 import org.mifosplatform.integrationtests.common.CommonConstants;
 import org.mifosplatform.integrationtests.common.Utils;
 import org.mifosplatform.integrationtests.common.accounting.Account;
-import org.mifosplatform.integrationtests.common.accounting.Account.AccountType;
-import org.mifosplatform.integrationtests.common.savings.SavingsProductHelper;
 
 import com.google.gson.Gson;
 import com.jayway.restassured.specification.RequestSpecification;
@@ -84,6 +79,7 @@ public class FixedDepositProductHelper {
     private final String currencyCode = USD;
     private final String interestCalculationDaysInYearType = DAYS_365;
     private Account[] accountList = null;
+    private boolean postInterestAsPerFinancialYear = false;
 
     public String build(final String validFrom, final String validTo) {
         final HashMap<String, Object> map = new HashMap<>();
@@ -160,6 +156,7 @@ public class FixedDepositProductHelper {
         map.put("inMultiplesOfDepositTermTypeId", this.inMultiplesOfDepositTermTypeId);
         map.put("preClosurePenalInterest", this.preClosurePenalInterest);
         map.put("preClosurePenalInterestOnTypeId", this.preClosurePenalInterestOnTypeId);
+        map.put("postInterestAsPerFinancialYear", postInterestAsPerFinancialYear);
 
         if (this.accountingRule.equals(CASH_BASED)) {
             map.putAll(getAccountMappingForCashBased());
@@ -178,6 +175,11 @@ public class FixedDepositProductHelper {
     public FixedDepositProductHelper withAccountingRuleAsCashBased(final Account[] account_list) {
         this.accountingRule = CASH_BASED;
         this.accountList = account_list;
+        return this;
+    }
+
+    public FixedDepositProductHelper withPostInterestAsPerFinancialYear(final boolean postInterestAsPerFinancialYear) {
+        this.postInterestAsPerFinancialYear = postInterestAsPerFinancialYear;
         return this;
     }
 

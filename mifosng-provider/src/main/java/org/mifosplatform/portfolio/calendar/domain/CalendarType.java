@@ -11,7 +11,7 @@ import java.util.Map;
 public enum CalendarType {
 
     COLLECTION(1, "calendarType.collection"), TRAINING(2, "calendarType.training"), AUDIT(3, "calendarType.audit"), GENERAL(4,
-            "calendarType.general");
+            "calendarType.general"), INTEREST_POSTING(5, "calendarType.interest.posting");
 
     private final Integer value;
     private final String code;

@@ -62,6 +62,7 @@ public class SchedulerJobsTestResults {
     private final String TRANSACTION_DATE = "01 March 2013";
     public static final String ACCOUNT_TYPE_INDIVIDUAL = "INDIVIDUAL";
     public static final String MINIMUM_OPENING_BALANCE = "1000";
+    private final Integer groupId = null;
 
     Float SP_BALANCE = new Float(MINIMUM_OPENING_BALANCE);
 
@@ -101,8 +102,8 @@ public class SchedulerJobsTestResults {
                 ClientSavingsIntegrationTest.MINIMUM_OPENING_BALANCE);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID,
-                ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -148,8 +149,8 @@ public class SchedulerJobsTestResults {
                 ClientSavingsIntegrationTest.MINIMUM_OPENING_BALANCE);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID,
-                ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -186,8 +187,8 @@ public class SchedulerJobsTestResults {
                 ClientSavingsIntegrationTest.MINIMUM_OPENING_BALANCE);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID,
-                ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -322,8 +323,8 @@ public class SchedulerJobsTestResults {
                 ClientSavingsIntegrationTest.MINIMUM_OPENING_BALANCE);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID,
-                ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);
@@ -377,7 +378,8 @@ public class SchedulerJobsTestResults {
                 liabilityAccount);
 
         final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec, this.DATE_OF_JOINING);
-        final Integer savingsID = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID, ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsID = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsID);
         SavingsStatusChecker.verifySavingsIsPending(savingsStatusHashMap);
@@ -584,8 +586,8 @@ public class SchedulerJobsTestResults {
                 ClientSavingsIntegrationTest.MINIMUM_OPENING_BALANCE);
         Assert.assertNotNull(savingsProductID);
 
-        final Integer fromSavingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID,
-                ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer fromSavingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap fromSavingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, fromSavingsId);
@@ -597,8 +599,8 @@ public class SchedulerJobsTestResults {
         fromSavingsStatusHashMap = this.savingsAccountHelper.activateSavings(fromSavingsId);
         SavingsStatusChecker.verifySavingsIsActive(fromSavingsStatusHashMap);
 
-        final Integer toSavingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, savingsProductID,
-                ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer toSavingsId = this.savingsAccountHelper.applyForSavingsApplication(clientID, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsProductID);
 
         HashMap toSavingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, toSavingsId);
@@ -764,8 +766,8 @@ public class SchedulerJobsTestResults {
         final Integer savingsProductID = createSavingsProduct(this.requestSpec, this.responseSpec, String.valueOf(balance));
         Assert.assertNotNull(savingsProductID);
 
-        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientId, savingsProductID,
-                ClientSavingsIntegrationTest.ACCOUNT_TYPE_INDIVIDUAL);
+        final Integer savingsId = this.savingsAccountHelper.applyForSavingsApplication(clientId, groupId, savingsProductID,
+                ACCOUNT_TYPE_INDIVIDUAL);
         Assert.assertNotNull(savingsId);
 
         HashMap savingsStatusHashMap = SavingsStatusChecker.getStatusOfSavings(this.requestSpec, this.responseSpec, savingsId);

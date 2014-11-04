@@ -70,13 +70,15 @@ import org.mifosplatform.organisation.monetary.domain.Money;
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
+import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
+import org.mifosplatform.portfolio.calendar.domain.CalendarFrequencyType;
+import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
+import org.mifosplatform.portfolio.calendar.service.CalendarUtils;
 import org.mifosplatform.portfolio.charge.domain.Charge;
 import org.mifosplatform.portfolio.charge.exception.SavingsAccountChargeNotFoundException;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.common.domain.PeriodFrequencyType;
 import org.mifosplatform.portfolio.group.domain.Group;
-import org.mifosplatform.portfolio.savings.exception.SavingsOfficerAssignmentDateException;
-import org.mifosplatform.portfolio.savings.domain.SavingsOfficerAssignmentHistory;
 import org.mifosplatform.portfolio.savings.DepositAccountType;
 import org.mifosplatform.portfolio.savings.SavingsApiConstants;
 import org.mifosplatform.portfolio.savings.SavingsCompoundingInterestPeriodType;
@@ -89,6 +91,7 @@ import org.mifosplatform.portfolio.savings.domain.interest.PostingPeriod;
 import org.mifosplatform.portfolio.savings.exception.InsufficientAccountBalanceException;
 import org.mifosplatform.portfolio.savings.exception.SavingsAccountTransactionNotFoundException;
 import org.mifosplatform.portfolio.savings.exception.SavingsActivityPriorToClientTransferException;
+import org.mifosplatform.portfolio.savings.exception.SavingsOfficerAssignmentDateException;
 import org.mifosplatform.portfolio.savings.exception.SavingsOfficerUnassignmentDateException;
 import org.mifosplatform.portfolio.savings.exception.SavingsTransferTransactionsCannotBeUndoneException;
 import org.mifosplatform.portfolio.savings.service.SavingsEnumerations;
@@ -269,7 +272,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "savingsAccount", orphanRemoval = true)
     private Set<SavingsOfficerAssignmentHistory> savingsOfficerHistory;
-    
+
     @Transient
     protected boolean accountNumberRequiresAutoGeneration = false;
     @Transient
@@ -286,7 +289,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     protected SavingsAccount() {
         //
     }
- 
+
     public static SavingsAccount createNewApplicationForSubmittal(final Client client, final Group group, final SavingsProduct product,
             final Staff fieldOfficer, final String accountNo, final String externalId, final AccountType accountType,
             final LocalDate submittedOnDate, final AppUser submittedBy, final BigDecimal interestRate,
@@ -417,14 +420,11 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return SavingsAccountStatusType.fromInt(this.status).isClosed();
     }
 
-	public void postInterest(final MathContext mc,
-			final LocalDate interestPostingUpToDate,
-			final boolean isInterestTransfer,
-			final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-			final Integer financialYearBeginningMonth) {
+    public void postInterest(final MathContext mc, final LocalDate interestPostingUpToDate, final boolean isInterestTransfer,
+            final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
 
         final List<PostingPeriod> postingPeriods = calculateInterestUsing(mc, interestPostingUpToDate, isInterestTransfer,
-        		isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+                isSavingsInterestPostingAtCurrentPeriodEnd);
 
         Money interestPostedToDate = Money.zero(this.currency);
 
@@ -519,8 +519,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
      *            TODO
      */
     public List<PostingPeriod> calculateInterestUsing(final MathContext mc, final LocalDate upToInterestCalculationDate,
-            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-            final Integer financialYearBeginningMonth) {
+            boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
 
         // no openingBalance concept supported yet but probably will to allow
         // for migrations.
@@ -535,7 +534,6 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         // that period
 
         // A generate list of EndOfDayBalances (not including interest postings)
-        final SavingsPostingInterestPeriodType postingPeriodType = SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
 
         final SavingsCompoundingInterestPeriodType compoundingPeriodType = SavingsCompoundingInterestPeriodType
                 .fromInt(this.interestCompoundingPeriodType);
@@ -543,9 +541,13 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         final SavingsInterestCalculationDaysInYearType daysInYearType = SavingsInterestCalculationDaysInYearType
                 .fromInt(this.interestCalculationDaysInYearType);
 
+        List<SavingsAccountTransaction> latestTransferTransactions = new ArrayList<>(1);
+        if (isInterestTransfer) {
+            latestTransferTransactions = retreiveLatestTransactions();
+        }
+
         final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
-                getStartInterestCalculationDate(), upToInterestCalculationDate, postingPeriodType,
-                financialYearBeginningMonth);
+                getStartInterestCalculationDate(), upToInterestCalculationDate, this.getId());
 
         final List<PostingPeriod> allPostingPeriods = new ArrayList<>();
 
@@ -576,6 +578,13 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         final SavingsInterestCalculationType interestCalculationType = SavingsInterestCalculationType.fromInt(this.interestCalculationType);
         final BigDecimal interestRateAsFraction = getEffectiveInterestRateAsFraction(mc, upToInterestCalculationDate);
         final Collection<Long> interestPostTransactions = this.savingsHelper.fetchPostInterestTransactionIds(getId());
+        if (latestTransferTransactions.size() > 0) {
+            for (SavingsAccountTransaction accountTransaction : latestTransferTransactions) {
+                if (accountTransaction.getId() != null) {
+                    interestPostTransactions.add(accountTransaction.getId());
+                }
+            }
+        }
         final Money minBalanceForInterestCalculation = Money.of(getCurrency(), minBalanceForInterestCalculation());
 
         for (final LocalDateInterval periodInterval : postingPeriodIntervals) {
@@ -1291,8 +1300,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
         return id;
     }
-    
-        
+
     public boolean hasSavingsOfficer(final Staff fromSavingsOfficer) {
 
         boolean matchesCurrentSavingsOfficer = false;
@@ -1303,12 +1311,13 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
         return matchesCurrentSavingsOfficer;
     }
-  
-    public void reassignSavingsOfficer(final Staff newSavingsOfficer,final LocalDate assignmentDate) {     
-    	final SavingsOfficerAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
+
+    public void reassignSavingsOfficer(final Staff newSavingsOfficer, final LocalDate assignmentDate) {
+        final SavingsOfficerAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
         final SavingsOfficerAssignmentHistory lastAssignmentRecord = findLastAssignmentHistoryRecord(newSavingsOfficer);
 
-        // assignment date should not be less than savings account submitted date
+        // assignment date should not be less than savings account submitted
+        // date
         if (isSubmittedOnDateAfter(assignmentDate)) {
 
             final String errorMessage = "The Savings Officer assignment date (" + assignmentDate.toString()
@@ -1337,24 +1346,25 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             latestHistoryRecord.updateSavingsOfficer(newSavingsOfficer);
             this.savingsOfficer = newSavingsOfficer;
         } else if (latestHistoryRecord != null && latestHistoryRecord.hasStartDateBefore(assignmentDate)) {
-            final String errorMessage = "Savings account with identifier " + getId() + " was already assigned before date " + assignmentDate;
+            final String errorMessage = "Savings account with identifier " + getId() + " was already assigned before date "
+                    + assignmentDate;
             throw new SavingsOfficerAssignmentDateException("is.before.last.assignment.date", errorMessage, getId(), assignmentDate);
         } else {
             if (latestHistoryRecord != null) {
-                // savings officer correctly changed from previous savings officer to
+                // savings officer correctly changed from previous savings
+                // officer to
                 // new savings officer
                 latestHistoryRecord.updateEndDate(assignmentDate);
             }
-    		this.savingsOfficer = newSavingsOfficer;
+            this.savingsOfficer = newSavingsOfficer;
             if (isNotSubmittedAndPendingApproval()) {
-                final SavingsOfficerAssignmentHistory savingsOfficerAssignmentHistory = 
-                		SavingsOfficerAssignmentHistory.createNew(this,this.savingsOfficer,assignmentDate);
+                final SavingsOfficerAssignmentHistory savingsOfficerAssignmentHistory = SavingsOfficerAssignmentHistory.createNew(this,
+                        this.savingsOfficer, assignmentDate);
                 this.savingsOfficerHistory.add(savingsOfficerAssignmentHistory);
             }
         }
     }
-    
-    
+
     private SavingsOfficerAssignmentHistory findLastAssignmentHistoryRecord(final Staff newSavingsOfficer) {
 
         SavingsOfficerAssignmentHistory lastAssignmentRecordLatestEndDate = null;
@@ -1374,19 +1384,18 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
         return lastAssignmentRecordLatestEndDate;
     }
-    
-        public boolean isSubmittedOnDateAfter(final LocalDate compareDate) {
-            return this.submittedOnDate == null ? false : new LocalDate(this.submittedOnDate).isAfter(compareDate);
-        }
 
-        public LocalDate getSubmittedOnDate() {
-            return (LocalDate) ObjectUtils.defaultIfNull(new LocalDate(this.submittedOnDate), null);
-        }
+    public boolean isSubmittedOnDateAfter(final LocalDate compareDate) {
+        return this.submittedOnDate == null ? false : new LocalDate(this.submittedOnDate).isAfter(compareDate);
+    }
 
-        
+    public LocalDate getSubmittedOnDate() {
+        return (LocalDate) ObjectUtils.defaultIfNull(new LocalDate(this.submittedOnDate), null);
+    }
+
     public void removeSavingsOfficer(final LocalDate unassignDate) {
 
-    	final SavingsOfficerAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
+        final SavingsOfficerAssignmentHistory latestHistoryRecord = findLatestIncompleteHistoryRecord();
 
         if (latestHistoryRecord != null) {
             validateUnassignDate(latestHistoryRecord, unassignDate);
@@ -1394,7 +1403,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
         this.savingsOfficer = null;
     }
-    
+
     private SavingsOfficerAssignmentHistory findLatestIncompleteHistoryRecord() {
 
         SavingsOfficerAssignmentHistory latestRecordWithNoEndDate = null;
@@ -1416,8 +1425,8 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             final String errorMessage = "The Savings officer Unassign date(" + unassignDate + ") cannot be before its assignment date ("
                     + latestHistoryRecord.getStartDate() + ").";
 
-            throw new SavingsOfficerUnassignmentDateException("cannot.be.before.assignment.date", errorMessage, getId(), getSavingsOfficer()
-                    .getId(), latestHistoryRecord.getStartDate(), unassignDate);
+            throw new SavingsOfficerUnassignmentDateException("cannot.be.before.assignment.date", errorMessage, getId(),
+                    getSavingsOfficer().getId(), latestHistoryRecord.getStartDate(), unassignDate);
 
         } else if (unassignDate.isAfter(today)) {
 
@@ -1426,7 +1435,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             throw new SavingsOfficerUnassignmentDateException("cannot.be.a.future.date", errorMessage, unassignDate);
         }
     }
-    
+
     public MonetaryCurrency getCurrency() {
         return this.currency;
     }
@@ -1436,9 +1445,19 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         // validateWithdrawalFeeDetails();
         // validateAnnualFeeDetails();
 
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        validateNewApplicationState(todayDateOfTenant, resourceName, dataValidationErrors);
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+    }
+
+    public void validateNewApplicationState(final LocalDate todayDateOfTenant, final String resourceName,
+            final List<ApiParameterError> dataValidationErrors) {
+
+        // validateWithdrawalFeeDetails();
+        // validateAnnualFeeDetails();
+
         final LocalDate submittedOn = getSubmittedOnLocalDate();
 
-        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource(resourceName
                 + SavingsApiConstants.summitalAction);
 
@@ -1459,7 +1478,6 @@ public class SavingsAccount extends AbstractPersistable<Long> {
                     .failWithCodeNoParameterAddedToErrorCode("cannot.be.before.client.activation.date");
         }
 
-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
     }
 
     protected LocalDate getSubmittedOnLocalDate() {
@@ -1470,7 +1488,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return submittedOn;
     }
 
-    private LocalDate getApprovedOnLocalDate() {
+    public LocalDate getApprovedOnLocalDate() {
         LocalDate approvedOnLocalDate = null;
         if (this.approvedOnDate != null) {
             approvedOnLocalDate = new LocalDate(this.approvedOnDate);
@@ -1832,9 +1850,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         return actualChanges;
     }
 
-	public void processAccountUponActivation(
-			final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-			final Integer financialYearBeginningMonth) {
+    public void processAccountUponActivation(final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
 
         // update annual fee due date
         for (SavingsAccountCharge charge : this.charges()) {
@@ -1842,8 +1858,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
 
         // auto pay the activation time charges
-        this.payActivationCharges(isSavingsInterestPostingAtCurrentPeriodEnd,
-        		financialYearBeginningMonth);
+        this.payActivationCharges(isSavingsInterestPostingAtCurrentPeriodEnd);
         // TODO : AA add activation charges to actual changes list
     }
 
@@ -1866,8 +1881,7 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         this.lockedInUntilDate = calculateDateAccountIsLockedUntil(getActivationLocalDate());
     }
 
-    private void payActivationCharges(final boolean isSavingsInterestPostingAtCurrentPeriodEnd,
-    		final Integer financialYearBeginningMonth) {
+    private void payActivationCharges(final boolean isSavingsInterestPostingAtCurrentPeriodEnd) {
         boolean isSavingsChargeApplied = false;
         for (SavingsAccountCharge savingsAccountCharge : this.charges()) {
             if (savingsAccountCharge.isSavingsActivation()) {
@@ -1881,12 +1895,10 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             boolean isInterestTransfer = false;
             if (this.isBeforeLastPostingPeriod(getActivationLocalDate())) {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
-                this.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd,
-                		financialYearBeginningMonth);
+                this.postInterest(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd);
             } else {
                 final LocalDate today = DateUtils.getLocalDateOfTenant();
-                this.calculateInterestUsing(mc, today, isInterestTransfer,
-                		isSavingsInterestPostingAtCurrentPeriodEnd, financialYearBeginningMonth);
+                this.calculateInterestUsing(mc, today, isInterestTransfer, isSavingsInterestPostingAtCurrentPeriodEnd);
             }
         }
     }
@@ -2321,6 +2333,12 @@ public class SavingsAccount extends AbstractPersistable<Long> {
     public void validateAccountValuesWithProduct() {
 
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        validateAccountValuesWithProduct(dataValidationErrors);
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+    }
+
+    public void validateAccountValuesWithProduct(final List<ApiParameterError> dataValidationErrors) {
+
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
                 .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
 
@@ -2331,8 +2349,77 @@ public class SavingsAccount extends AbstractPersistable<Long> {
         }
 
         validateInterestPostingAndCompoundingPeriodTypes(baseDataValidator);
+        validateInterestPostingDate(dataValidationErrors);
 
+    }
+
+    public void validateInterestPostingDate() {
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        validateInterestPostingDate(dataValidationErrors);
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+    }
+
+    public void validateInterestPostingDate(final List<ApiParameterError> dataValidationErrors) {
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
+                .resource(SAVINGS_ACCOUNT_RESOURCE_NAME);
+        if (this.product.isSyncInterestPostingWithMeetingEnabled()) {
+            if (this.group == null) {
+                baseDataValidator.reset().parameter(SavingsApiConstants.syncInterestPostingWithMeetingParamName)
+                        .failWithCode("group.not.found");
+            } else {
+                CalendarInstance calendarInstance = getGroupCalendar();
+                if (calendarInstance == null) {
+                    baseDataValidator.reset().parameter(SavingsApiConstants.syncInterestPostingWithMeetingParamName)
+                            .failWithCode("calendar.not.found");
+                } else {
+                    CalendarFrequencyType calendarFrequencyType = CalendarUtils
+                            .getFrequency(calendarInstance.getCalendar().getRecurrence());
+
+                    int interval = CalendarUtils.getInterval(calendarInstance.getCalendar().getRecurrence());
+                    if (!isCalendarMatchingWithPostingPeriodtype(calendarFrequencyType, interval)) {
+                        baseDataValidator.reset().parameter(SavingsApiConstants.syncInterestPostingWithMeetingParamName)
+                                .failWithCode("interest.posting.not.same.as.meeting.frequency");
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isCalendarMatchingWithPostingPeriodtype(CalendarFrequencyType calendarFrequencyType, int interval) {
+        boolean canMatch = false;
+        switch (getSavingsPostingInterestPeriodType()) {
+            case ANNUAL:
+                canMatch = (calendarFrequencyType.isYEARLY() || (calendarFrequencyType.isMONTHLY() && 12 % interval == 0));
+            break;
+            case MONTHLY:
+                canMatch = (calendarFrequencyType.isMONTHLY() && 1 % interval == 0);
+            break;
+            case BIANNUAL:
+                canMatch = (calendarFrequencyType.isMONTHLY() && 6 % interval == 0);
+            break;
+            case QUATERLY:
+                canMatch = (calendarFrequencyType.isMONTHLY() && 3 % interval == 0);
+            break;
+            default:
+            break;
+        }
+
+        return canMatch;
+    }
+
+    public CalendarInstance getGroupCalendar() {
+        CalendarInstance calendarInstance = null;
+        if (this.group != null) {
+            Long groupId = this.group.getId();
+            Group parent = this.group.getParent();
+            Integer entityType = CalendarEntityType.GROUPS.getValue();
+            if (parent != null) {
+                groupId = parent.getId();
+                entityType = CalendarEntityType.CENTERS.getValue();
+            }
+            calendarInstance = this.savingsHelper.getGroupMeeting(groupId, entityType);
+        }
+        return calendarInstance;
     }
 
     public boolean allowOverdraft() {
@@ -2439,5 +2526,31 @@ public class SavingsAccount extends AbstractPersistable<Long> {
             }
         }
         return savingsAccountCharge;
+    }
+
+    public boolean isSyncInterestPostingWithMeetingEnabled() {
+        return this.product.isSyncInterestPostingWithMeetingEnabled();
+    }
+
+    public SavingsPostingInterestPeriodType getSavingsPostingInterestPeriodType() {
+        return SavingsPostingInterestPeriodType.fromInt(this.interestPostingPeriodType);
+    }
+
+    private List<SavingsAccountTransaction> retreiveLatestTransactions() {
+        final List<SavingsAccountTransaction> listOfTransactionsSorted = retreiveListOfTransactions();
+
+        final List<SavingsAccountTransaction> latestTransactions = new ArrayList<>();
+
+        for (final SavingsAccountTransaction transaction : listOfTransactionsSorted) {
+            if (transaction.getId() == null && !transaction.isInterestPostingAndNotReversed() && transaction.isNotReversed()) {
+                latestTransactions.add(transaction);
+            }
+        }
+
+        return latestTransactions;
+    }
+    
+    public boolean isPostInterestAsPerFinancialYearEnabled(){
+        return this.product.isPostInterestAsPerFinancialYearEnabled();
     }
 }

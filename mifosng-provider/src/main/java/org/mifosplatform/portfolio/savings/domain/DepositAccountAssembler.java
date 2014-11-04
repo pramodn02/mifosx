@@ -56,6 +56,7 @@ import org.mifosplatform.organisation.staff.domain.Staff;
 import org.mifosplatform.organisation.staff.domain.StaffRepositoryWrapper;
 import org.mifosplatform.portfolio.account.service.AccountTransfersReadPlatformService;
 import org.mifosplatform.portfolio.accountdetails.domain.AccountType;
+import org.mifosplatform.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepositoryWrapper;
 import org.mifosplatform.portfolio.client.exception.ClientNotActiveException;
@@ -108,7 +109,8 @@ public class DepositAccountAssembler {
             final SavingsAccountChargeAssembler savingsAccountChargeAssembler, final FromJsonHelper fromApiJsonHelper,
             final DepositProductAssembler depositProductAssembler,
             final RecurringDepositProductRepository recurringDepositProductRepository,
-            final AccountTransfersReadPlatformService accountTransfersReadPlatformService) {
+            final AccountTransfersReadPlatformService accountTransfersReadPlatformService,
+            final CalendarInstanceRepository calendarInstanceRepository) {
 
         this.savingsAccountTransactionSummaryWrapper = savingsAccountTransactionSummaryWrapper;
         this.clientRepository = clientRepository;
@@ -120,7 +122,7 @@ public class DepositAccountAssembler {
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.depositProductAssembler = depositProductAssembler;
         this.recurringDepositProductRepository = recurringDepositProductRepository;
-        this.savingsHelper = new SavingsHelper(accountTransfersReadPlatformService);
+        this.savingsHelper = new SavingsHelper(accountTransfersReadPlatformService, calendarInstanceRepository);
     }
 
     /**

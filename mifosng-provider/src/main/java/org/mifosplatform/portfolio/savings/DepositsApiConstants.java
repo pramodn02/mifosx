@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.portfolio.savings;
 
+import static org.mifosplatform.portfolio.savings.SavingsApiConstants.syncInterestPostingWithMeetingParamName;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -120,6 +122,8 @@ public class DepositsApiConstants {
     public static final String depositPeriodParamName = "depositPeriod";
     public static final String depositPeriodFrequencyIdParamName = "depositPeriodFrequencyId";
 
+    public static final String postInterestAsPerFinancialYearParamName = "postInterestAsPerFinancialYear";
+
     // recurring parameters
     public static final String mandatoryRecommendedDepositAmountParamName = "mandatoryRecommendedDepositAmount";
     public static final String isMandatoryDepositParamName = "isMandatoryDeposit";
@@ -200,7 +204,8 @@ public class DepositsApiConstants {
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_CONTROL.getValue(), SAVINGS_PRODUCT_ACCOUNTING_PARAMS.TRANSFERS_SUSPENSE.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.SAVINGS_REFERENCE.getValue(),
             SAVINGS_PRODUCT_ACCOUNTING_PARAMS.FEE_INCOME_ACCOUNT_MAPPING.getValue(),
-            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(), chartsParamName));
+            SAVINGS_PRODUCT_ACCOUNTING_PARAMS.PENALTY_INCOME_ACCOUNT_MAPPING.getValue(), chartsParamName,
+            postInterestAsPerFinancialYearParamName));
 
     private static final Set<String> PRECLOSURE_REQUEST_DATA_PARAMETERS = new HashSet<>(Arrays.asList(preClosurePenalApplicableParamName,
             preClosurePenalInterestParamName, preClosurePenalInterestOnTypeIdParamName));
