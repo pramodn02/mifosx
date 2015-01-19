@@ -291,7 +291,7 @@ public class Loan extends AbstractPersistable<Long> {
 
     // see
     // http://stackoverflow.com/questions/4334970/hibernate-cannot-simultaneously-fetch-multiple-bags
-    @OrderBy(value = "dateOf, id")
+    @OrderBy(value = "dateOf, created_date, id")
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
     private final List<LoanTransaction> loanTransactions = new ArrayList<>();
@@ -2772,8 +2772,6 @@ public class Loan extends AbstractPersistable<Long> {
                 repaymentsOrWaivers.add(transaction);
             }
         }
-        final LoanTransactionComparator transactionComparator = new LoanTransactionComparator();
-        Collections.sort(repaymentsOrWaivers, transactionComparator);
         return repaymentsOrWaivers;
     }
 
@@ -2785,8 +2783,6 @@ public class Loan extends AbstractPersistable<Long> {
                 repaymentsOrWaivers.add(transaction);
             }
         }
-        final LoanTransactionComparator transactionComparator = new LoanTransactionComparator();
-        Collections.sort(repaymentsOrWaivers, transactionComparator);
         return repaymentsOrWaivers;
     }
 
@@ -2797,8 +2793,6 @@ public class Loan extends AbstractPersistable<Long> {
                 repaymentsOrWaivers.add(transaction);
             }
         }
-        final LoanTransactionComparator transactionComparator = new LoanTransactionComparator();
-        Collections.sort(repaymentsOrWaivers, transactionComparator);
         return repaymentsOrWaivers;
     }
 
@@ -2809,8 +2803,6 @@ public class Loan extends AbstractPersistable<Long> {
                 transactions.add(transaction);
             }
         }
-        final LoanTransactionComparator transactionComparator = new LoanTransactionComparator();
-        Collections.sort(transactions, transactionComparator);
         return transactions;
     }
 

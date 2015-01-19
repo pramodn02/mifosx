@@ -150,7 +150,7 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         HashMap toLoanSummaryAfter = this.loanTransactionHelper.getLoanSummary(requestSpec, responseSpec, loanID);
         Assert.assertTrue("Checking for Principal paid ",
                 new Float("500.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("principalPaid")))) == 0);
-        Assert.assertTrue("Checking for interestPaid paid ",
+        Assert.assertTrue("Checking for interest paid ",
                 new Float("180.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("interestPaid")))) == 0);
         Assert.assertTrue("Checking for total paid ",
                 new Float("680.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("totalRepayment")))) == 0);
@@ -160,10 +160,61 @@ public class LoanWithWaiveInterestAndWriteOffIntegrationTest {
         toLoanSummaryAfter = this.loanTransactionHelper.getLoanSummary(requestSpec, responseSpec, loanID);
         Assert.assertTrue("Checking for Principal written off ",
                 new Float("4000.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("principalWrittenOff")))) == 0);
-        Assert.assertTrue("Checking for interestPaid written off ",
+        Assert.assertTrue("Checking for interest written off ",
                 new Float("1440.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("interestWrittenOff")))) == 0);
         Assert.assertTrue("Checking for total written off ",
                 new Float("5440.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("totalWrittenOff")))) == 0);
+
+    }
+
+    @Test
+    public void checkClientLoan_WAIVE_INTEREST_ON_REPAYMENT_DAY() {
+        // CREATE CLIENT
+        final Integer clientID = ClientHelper.createClient(this.requestSpec, this.responseSpec, this.DATE_OF_JOINING);
+        ClientHelper.verifyClientCreatedOnServer(this.requestSpec, this.responseSpec, clientID);
+
+        // CREATE LOAN PRODUCT
+        final Integer loanProductID = createLoanProduct();
+        // APPLY FOR LOAN
+        final Integer loanID = applyForLoanApplication(clientID, loanProductID);
+
+        HashMap loanStatusHashMap = LoanStatusChecker.getStatusOfLoan(this.requestSpec, this.responseSpec, loanID);
+        LoanStatusChecker.verifyLoanIsPending(loanStatusHashMap);
+
+        System.out.println("-----------------------------------APPROVE LOAN-----------------------------------------");
+        loanStatusHashMap = this.loanTransactionHelper.approveLoan("28 September 2010", loanID);
+        LoanStatusChecker.verifyLoanIsApproved(loanStatusHashMap);
+        LoanStatusChecker.verifyLoanIsWaitingForDisbursal(loanStatusHashMap);
+
+        // DISBURSE
+        loanStatusHashMap = this.loanTransactionHelper.disburseLoan(this.DISBURSEMENT_DATE, loanID);
+        System.out.println("DISBURSE " + loanStatusHashMap);
+        LoanStatusChecker.verifyLoanIsActive(loanStatusHashMap);
+
+        // MAKE REPAYMENTS
+        final float repayment_with_interest = 680.0f;
+
+        this.loanTransactionHelper.verifyRepaymentScheduleEntryFor(1, 4000.0F, loanID);
+        this.loanTransactionHelper.makeRepayment("1 January 2011", repayment_with_interest, loanID);
+
+        HashMap toLoanSummaryAfter = this.loanTransactionHelper.getLoanSummary(requestSpec, responseSpec, loanID);
+        Assert.assertTrue("Checking for Principal paid ",
+                new Float("500.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("principalPaid")))) == 0);
+        Assert.assertTrue("Checking for interest paid ",
+                new Float("180.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("interestPaid")))) == 0);
+        Assert.assertTrue("Checking for total paid ",
+                new Float("680.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("totalRepayment")))) == 0);
+
+        // Waive LOAN AND CHECK ACCOUNT
+
+        this.loanTransactionHelper.waiveInterest("1 January 2011", "1440.0", loanID);
+        toLoanSummaryAfter = this.loanTransactionHelper.getLoanSummary(requestSpec, responseSpec, loanID);
+        Assert.assertTrue("Checking for interestPaid paid ",
+                new Float("180.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("interestPaid")))) == 0);
+        Assert.assertTrue("Checking for interest waived ",
+                new Float("1440.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("interestWaived")))) == 0);
+        Assert.assertTrue("Checking for interest outstanding",
+                new Float("0.0").compareTo(new Float(String.valueOf(toLoanSummaryAfter.get("interestOutstanding")))) == 0);
 
     }
 
