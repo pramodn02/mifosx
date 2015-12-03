@@ -615,6 +615,10 @@ public class LoanScheduleAssembler {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
                                 "variable.schedule.amount.update.not.allowed.before.grace.period", "Loan schedule modify request invalid");
                     }
+                    if(!dueDates.contains(termVariations.fetchTermApplicaDate())){
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.amount.update.from.date.invalid", "Loan schedule modify request invalid");
+                    }
                 break;
 
                 default:

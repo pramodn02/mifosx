@@ -125,11 +125,11 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         // actual outstanding balance for interest calculation
         Money outstandingBalance = principalToBeScheduled;
 
-      //Set Fixed Principal Amount
-        if(loanApplicationTerms.getAmortizationMethod().equals(AmortizationMethod.EQUAL_PRINCIPAL)) {
-            loanApplicationTerms.updateFixedPrincipalAmount(mc, periodNumber, outstandingBalance) ;
+        // Set Fixed Principal Amount
+        if (loanApplicationTerms.getAmortizationMethod().equals(AmortizationMethod.EQUAL_PRINCIPAL)) {
+            loanApplicationTerms.updateFixedPrincipalAmount(mc, periodNumber, outstandingBalance);
         }
-        
+
         // Set fixed EMI Amount
         if (loanApplicationTerms.getFixedEmiAmount() == null) {
             updateFixedInstallmentAmount(mc, loanApplicationTerms, actualRepaymentDate, periodNumber, outstandingBalance, holidayDetailDTO);
@@ -264,8 +264,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
             // Exceptions That need to be applied for Loan Account
             boolean skipPeriod = false;
-            loanApplicationTerms.setCurrentPeriodFixedEmiAmount(null);
-            loanApplicationTerms.setCurrentPeriodFixedPrincipalAmount(null);
+            boolean recalculateAmounts = false;
             while (loanApplicationTerms.getLoanTermVariations().hasVariation(scheduledDueDate)) {
                 LoanTermVariationsData loanTermVariationsData = loanApplicationTerms.getLoanTermVariations().nextVariation();
                 if (loanTermVariationsData.isProcessed()) {
@@ -301,6 +300,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     case EMI_AMOUNT:
                         if (loanTermVariationsData.isSpecificToInstallment()) {
                             loanApplicationTerms.setCurrentPeriodFixedEmiAmount(loanTermVariationsData.getDecimalValue());
+                            recalculateAmounts = true;
                         } else {
                             loanApplicationTerms.setFixedEmiAmount(loanTermVariationsData.getDecimalValue());
                         }
@@ -309,6 +309,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     case PRINCIPAL_AMOUNT:
                         if (loanTermVariationsData.isSpecificToInstallment()) {
                             loanApplicationTerms.setCurrentPeriodFixedPrincipalAmount(loanTermVariationsData.getDecimalValue());
+                            recalculateAmounts = true;
                         } else {
                             loanApplicationTerms.setFixedPrincipalAmount(loanTermVariationsData.getDecimalValue());
                         }
@@ -638,7 +639,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     periodStartDateApplicableForInterest, scheduledDueDate, daysInPeriodApplicableForInterest, interestRates);
 
             if (loanApplicationTerms.getFixedEmiAmount() != null
-                    && loanApplicationTerms.getFixedEmiAmount().compareTo(principalInterestForThisPeriod.interest().getAmount()) != 1) {
+                    && loanApplicationTerms.getFixedEmiAmount().compareTo(principalInterestForThisPeriod.interest().getAmount()) == -1) {
                 String errorMsg = "EMI amount must be greater than : " + principalInterestForThisPeriod.interest().getAmount();
                 throw new MultiDisbursementEmiAmountException(errorMsg, principalInterestForThisPeriod.interest().getAmount(),
                         loanApplicationTerms.getFixedEmiAmount());
@@ -833,6 +834,11 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             instalmentNumber++;
             periodNumber++;
             compoundingDateVariations.clear();
+            if (recalculateAmounts) {
+                loanApplicationTerms.setCurrentPeriodFixedEmiAmount(null);
+                loanApplicationTerms.setCurrentPeriodFixedPrincipalAmount(null);
+                adjustInstallmentOrPrincipalAmount(loanApplicationTerms, totalCumulativePrincipal, periodNumber, mc, holidayDetailDTO);
+            }
         }
 
         // this condition is to add the interest from grace period if not
@@ -968,7 +974,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         int periodNumberTemp = 1;
         LocalDate lastRestDate = getNextRestScheduleDate(currentDate.minusDays(1), loanApplicationTerms, holidayDetailDTO);
         Collection<LoanTermVariationsData> applicableVariations = loanApplicationTerms.getLoanTermVariations().getInterestRateChanges();
-        
 
         do {
 
@@ -1146,12 +1151,11 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         Money principal = getPrincipalToBeScheduled(loanApplicationTerms);
         if (loanApplicationTerms.getAmortizationMethod().isEqualPrincipal()) {
             loanApplicationTerms.updateFixedPrincipalAmount(mc, periodNumber, principal.minus(totalCumulativePrincipal));
-        }else if (loanApplicationTerms.getActualFixedEmiAmount() == null) {
+        } else if (loanApplicationTerms.getActualFixedEmiAmount() == null) {
             loanApplicationTerms.setFixedEmiAmount(null);
             updateFixedInstallmentAmount(mc, loanApplicationTerms, loanApplicationTerms.getExpectedDisbursementDate(), periodNumber,
                     principal.minus(totalCumulativePrincipal), holidayDetailDTO);
         }
-       
 
     }
 

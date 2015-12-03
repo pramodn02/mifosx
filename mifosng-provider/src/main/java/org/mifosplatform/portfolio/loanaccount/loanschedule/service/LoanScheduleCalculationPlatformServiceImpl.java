@@ -227,42 +227,52 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
         Collection<LoanRepaymentScheduleInstallment> installments = loan.getRepaymentScheduleInstallments();
         final List<LoanSchedulePeriodData> installmentData = new ArrayList<>();
         final MonetaryCurrency currency = loan.getCurrency();
-        Money disbusedAmount = loan.getPrincpal();
+        Money outstanding = loan.getPrincpal();
+
         Set<LoanDisbursementDetails> disbursementDetails = new HashSet<>();
         if (loan.isMultiDisburmentLoan()) {
             disbursementDetails = loan.getDisbursementDetails();
-            disbusedAmount = disbusedAmount.zero();
+            outstanding = outstanding.zero();
         }
+        Money principal = outstanding;
         Iterator<LoanDisbursementDetails> disbursementItr = disbursementDetails.iterator();
         LoanDisbursementDetails loanDisbursementDetails = null;
         if (disbursementItr.hasNext()) {
             loanDisbursementDetails = disbursementItr.next();
         }
+
+        Money totalInterest = principal.zero();
+        Money totalCharge = principal.zero();
+        Money totalPenalty = principal.zero();
+
         for (LoanRepaymentScheduleInstallment installment : installments) {
             if (loanDisbursementDetails != null
                     && !loanDisbursementDetails.expectedDisbursementDateAsLocalDate().isAfter(installment.getDueDate())) {
-                disbusedAmount = disbusedAmount.plus(loanDisbursementDetails.principal());
+                outstanding = outstanding.plus(loanDisbursementDetails.principal());
+                principal = principal.plus(loanDisbursementDetails.principal());
                 if (disbursementItr.hasNext()) {
                     loanDisbursementDetails = disbursementItr.next();
                 } else {
                     loanDisbursementDetails = null;
                 }
             }
-            disbusedAmount = disbusedAmount.minus(installment.getPrincipal(currency));
+            outstanding = outstanding.minus(installment.getPrincipal(currency));
             LoanSchedulePeriodData loanSchedulePeriodData = LoanSchedulePeriodData.repaymentOnlyPeriod(installment.getInstallmentNumber(),
                     installment.getFromDate(), installment.getDueDate(), installment.getPrincipal(currency).getAmount(),
-                    disbusedAmount.getAmount(), installment.getInterestCharged(currency).getAmount(),
+                    outstanding.getAmount(), installment.getInterestCharged(currency).getAmount(),
                     installment.getFeeChargesCharged(currency).getAmount(), installment.getPenaltyChargesCharged(currency).getAmount(),
                     installment.getDue(currency).getAmount());
             installmentData.add(loanSchedulePeriodData);
+            totalInterest = totalInterest.plus(installment.getInterestCharged(currency));
+            totalCharge = totalCharge.plus(installment.getFeeChargesCharged(currency));
+            totalPenalty = totalPenalty.plus(installment.getPenaltyChargesCharged(currency));
         }
 
         CurrencyData currencyData = this.currencyReadPlatformService.retrieveCurrency(currency.getCode());
 
         LoanScheduleData scheduleData = new LoanScheduleData(currencyData, installmentData, loan.getLoanRepaymentScheduleDetail()
-                .getNumberOfRepayments(), loan.getSummary().getTotalPrincipalDisbursed(), loan.getSummary().getTotalPrincipalDisbursed(),
-                loan.getSummary().getTotalInterestCharged(), loan.getSummary().getTotalFeeChargesCharged(), loan.getSummary()
-                        .getTotalPenaltyChargesCharged(), loan.getSummary().getTotalExpectedRepayment());
+                .getNumberOfRepayments(), principal.getAmount(), principal.getAmount(), totalInterest.getAmount(), totalCharge.getAmount(),
+                totalPenalty.getAmount(), principal.plus(totalCharge).plus(totalInterest).plus(totalPenalty).getAmount());
 
         return scheduleData;
     }
