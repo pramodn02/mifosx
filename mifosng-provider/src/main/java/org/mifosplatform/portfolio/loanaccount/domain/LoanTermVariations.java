@@ -34,18 +34,27 @@ public class LoanTermVariations extends AbstractPersistable<Long> {
     private Integer termType;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "applicable_from")
+    @Column(name = "applicable_date", nullable = false)
     private Date termApplicableFrom;
 
-    @Column(name = "term_value", scale = 6, precision = 19)
-    private BigDecimal termValue;
+    @Column(name = "decimal_value", scale = 6, precision = 19)
+    private BigDecimal decimalValue;
 
-    public LoanTermVariations(final Integer termType, final Date termApplicableFrom, final BigDecimal termValue, final Loan loan) {
+    @Temporal(TemporalType.DATE)
+    @Column(name = "date_value")
+    private Date dateValue;
 
+    @Column(name = "is_specific_to_installment", nullable = false)
+    private boolean isSpecificToInstallment;
+
+    public LoanTermVariations(final Integer termType, final Date termApplicableFrom, final BigDecimal decimalValue, Date dateValue,
+            boolean isSpecificToInstallment, final Loan loan) {
         this.loan = loan;
         this.termApplicableFrom = termApplicableFrom;
         this.termType = termType;
-        this.termValue = termValue;
+        this.decimalValue = decimalValue;
+        this.dateValue = dateValue;
+        this.isSpecificToInstallment = isSpecificToInstallment;
     }
 
     protected LoanTermVariations() {
@@ -58,16 +67,32 @@ public class LoanTermVariations extends AbstractPersistable<Long> {
 
     public LoanTermVariationsData toData() {
         LocalDate termStartDate = new LocalDate(this.termApplicableFrom);
+        LocalDate dateValue = null;
+        if (this.dateValue != null) {
+            dateValue = new LocalDate(this.dateValue);
+        }
         EnumOptionData type = LoanEnumerations.loanvariationType(this.termType);
-        return new LoanTermVariationsData(getId(), type, termStartDate, this.termValue);
+        return new LoanTermVariationsData(getId(), type, termStartDate, this.decimalValue, dateValue, this.isSpecificToInstallment);
     }
 
     public Date getTermApplicableFrom() {
         return this.termApplicableFrom;
     }
 
+    public LocalDate fetchTermApplicaDate() {
+        return new LocalDate(this.termApplicableFrom);
+    }
+
     public BigDecimal getTermValue() {
-        return this.termValue;
+        return this.decimalValue;
+    }
+
+    public Date getDateValue() {
+        return this.dateValue;
+    }
+
+    public LocalDate fetchDateValue() {
+        return this.dateValue == null ? null : new LocalDate(this.dateValue);
     }
 
 }

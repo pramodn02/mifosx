@@ -345,7 +345,7 @@ public class Loan extends AbstractPersistable<Long> {
     @OrderBy(value = "termApplicableFrom, id")
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "loan", orphanRemoval = true)
-    private final Set<LoanTermVariations> loanTermVariations = new HashSet<>();
+    private final List<LoanTermVariations> loanTermVariations = new ArrayList<>();
 
     @Column(name = "total_recovered_derived", scale = 6, precision = 19)
     private BigDecimal totalRecovered;
@@ -1530,7 +1530,7 @@ public class Loan extends AbstractPersistable<Long> {
         for (final LoanCharge loanCharge : charges) {
             recalculateLoanCharge(loanCharge, penaltyWaitPeriod);
         }
-        updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement()); 
+        updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
     }
 
     public boolean isInterestRecalculationEnabledForProduct() {
@@ -2340,8 +2340,10 @@ public class Loan extends AbstractPersistable<Long> {
         if ((this.loanProduct.isMultiDisburseLoan() || this.loanProduct.canDefineInstallmentAmount()) && emiAmount != null
                 && emiAmount.compareTo(retriveLastEmiAmount()) != 0) {
             if (this.loanProduct.isMultiDisburseLoan()) {
+                final Date dateValue = null;
+                final boolean isSpecificToInstallment = false;
                 LoanTermVariations loanVariationTerms = new LoanTermVariations(LoanTermVariationType.EMI_AMOUNT.getValue(),
-                        actualDisbursementDate.toDate(), emiAmount, this);
+                        actualDisbursementDate.toDate(), emiAmount, dateValue, isSpecificToInstallment, this);
                 this.loanTermVariations.add(loanVariationTerms);
             } else {
                 this.fixedEmiAmount = emiAmount;
@@ -2580,21 +2582,6 @@ public class Loan extends AbstractPersistable<Long> {
         for (LoanDisbursementDetails disbursementDetails : this.disbursementDetails) {
             disbursementData.add(disbursementDetails.toData());
         }
-        final List<LoanTermVariationsData> loanVariationTermsData = new ArrayList<>();
-        boolean isDefaultEmiAmountReq = true;
-        for (LoanTermVariations variationTerms : this.loanTermVariations) {
-            if (variationTerms.getTermType().isEMIAmountVariation()) {
-                if (variationTerms.getTermApplicableFrom().equals(this.getDisbursementDate().toDate())) {
-                    isDefaultEmiAmountReq = false;
-                }
-                loanVariationTermsData.add(variationTerms.toData());
-            }
-        }
-        if (isDefaultEmiAmountReq) {
-            LoanTermVariationsData data = new LoanTermVariationsData(null,
-                    LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), this.getDisbursementDate(), this.fixedEmiAmount);
-            loanVariationTermsData.add(data);
-        }
 
         CalendarInstance restCalendarInstance = null;
         CalendarInstance compoundingCalendarInstance = null;
@@ -2612,35 +2599,44 @@ public class Loan extends AbstractPersistable<Long> {
         }
 
         BigDecimal annualNominalInterestRate = this.loanRepaymentScheduleDetail.getAnnualNominalInterestRate();
-        Collection<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
-        if (loanProduct.isLinkedToFloatingInterestRate()) {
-            Collection<FloatingRatePeriodData> applicableRates = loanProduct.fetchInterestRates(scheduleGeneratorDTO.getFloatingRateDTO());
-            LocalDate interestRateStartDate = DateUtils.getLocalDateOfTenant();
-            for (FloatingRatePeriodData periodData : applicableRates) {
-                LoanTermVariationsData loanTermVariation = new LoanTermVariationsData(
-                        LoanEnumerations.loanvariationType(LoanTermVariationType.INTEREST_RATE), periodData.getFromDateAsLocalDate(),
-                        periodData.getInterestRate());
-                if (interestRateStartDate.isAfter(periodData.getFromDateAsLocalDate())) {
-                    interestRateStartDate = periodData.getFromDateAsLocalDate();
-                    annualNominalInterestRate = periodData.getInterestRate();
-                }
-                loanTermVariations.add(loanTermVariation);
-            }
-        }
+        FloatingRateDTO floatingRateDTO = scheduleGeneratorDTO.getFloatingRateDTO();
+        List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
+        annualNominalInterestRate = constructLoanTermVariations(floatingRateDTO, annualNominalInterestRate, loanTermVariations);
 
         final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFrom(scheduleGeneratorDTO.getApplicationCurrency(),
                 loanTermFrequency, loanTermPeriodFrequencyType, nthDayType, dayOfWeekType, getDisbursementDate(),
                 getExpectedFirstRepaymentOnDate(), scheduleGeneratorDTO.getCalculatedRepaymentsStartingFromDate(), getInArrearsTolerance(),
                 this.loanRepaymentScheduleDetail, this.loanProduct.isMultiDisburseLoan(), this.fixedEmiAmount, disbursementData,
-                this.maxOutstandingLoanBalance, loanVariationTermsData, getInterestChargedFromDate(),
-                this.loanProduct.getPrincipalThresholdForLastInstallment(), this.loanProduct.getInstallmentAmountInMultiplesOf(),
-                recalculationFrequencyType, restCalendarInstance, compoundingMethod, compoundingCalendarInstance, compoundingFrequencyType,
-                this.loanProduct.preCloseInterestCalculationStrategy(), rescheduleStrategyMethod, getApprovedPrincipal(),
-                annualNominalInterestRate, loanTermVariations);
+                this.maxOutstandingLoanBalance, getInterestChargedFromDate(), this.loanProduct.getPrincipalThresholdForLastInstallment(),
+                this.loanProduct.getInstallmentAmountInMultiplesOf(), recalculationFrequencyType, restCalendarInstance, compoundingMethod,
+                compoundingCalendarInstance, compoundingFrequencyType, this.loanProduct.preCloseInterestCalculationStrategy(),
+                rescheduleStrategyMethod, getApprovedPrincipal(), annualNominalInterestRate, loanTermVariations);
 
         final LoanScheduleModel loanSchedule = loanScheduleGenerator.generate(mc, loanApplicationTerms, charges(),
                 scheduleGeneratorDTO.getHolidayDetailDTO());
         return loanSchedule;
+    }
+
+    private BigDecimal constructFloatingInterestRates(final BigDecimal annualNominalInterestRate, final FloatingRateDTO floatingRateDTO,
+            final List<LoanTermVariationsData> loanTermVariations) {
+        final LocalDate dateValue = null;
+        final boolean isSpecificToInstallment = false;
+        BigDecimal interestRate = annualNominalInterestRate;
+        if (loanProduct.isLinkedToFloatingInterestRate()) {
+            Collection<FloatingRatePeriodData> applicableRates = loanProduct.fetchInterestRates(floatingRateDTO);
+            LocalDate interestRateStartDate = DateUtils.getLocalDateOfTenant();
+            for (FloatingRatePeriodData periodData : applicableRates) {
+                LoanTermVariationsData loanTermVariation = new LoanTermVariationsData(
+                        LoanEnumerations.loanvariationType(LoanTermVariationType.INTEREST_RATE), periodData.getFromDateAsLocalDate(),
+                        periodData.getInterestRate(), dateValue, isSpecificToInstallment);
+                if (interestRateStartDate.isAfter(periodData.getFromDateAsLocalDate())) {
+                    interestRateStartDate = periodData.getFromDateAsLocalDate();
+                    interestRate = periodData.getInterestRate();
+                }
+                loanTermVariations.add(loanTermVariation);
+            }
+        }
+        return interestRate;
     }
 
     private void handleDisbursementTransaction(final LocalDate disbursedOn, final LocalDateTime createdDate, final AppUser currentUser) {
@@ -5001,51 +4997,23 @@ public class Loan extends AbstractPersistable<Long> {
         for (LoanDisbursementDetails disbursementDetails : this.disbursementDetails) {
             disbursementData.add(disbursementDetails.toData());
         }
-        final List<LoanTermVariationsData> loanVariationTermsData = new ArrayList<>();
-        boolean isDefaultEmiAmountReq = true;
-        for (LoanTermVariations variationTerms : this.loanTermVariations) {
-            if (variationTerms.getTermType().isEMIAmountVariation()) {
-                if (variationTerms.getTermApplicableFrom().equals(this.getDisbursementDate().toDate())) {
-                    isDefaultEmiAmountReq = false;
-                }
-                loanVariationTermsData.add(variationTerms.toData());
-            }
-        }
-        if (isDefaultEmiAmountReq) {
-            LoanTermVariationsData data = new LoanTermVariationsData(null,
-                    LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), this.getDisbursementDate(), this.fixedEmiAmount);
-            loanVariationTermsData.add(data);
-        }
 
         RecalculationFrequencyType recalculationFrequencyType = this.loanInterestRecalculationDetails().getRestFrequencyType();
         RecalculationFrequencyType compoundingFrequencyType = this.loanInterestRecalculationDetails().getCompoundingFrequencyType();
 
         BigDecimal annualNominalInterestRate = this.loanRepaymentScheduleDetail.getAnnualNominalInterestRate();
-        Collection<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
-        if (loanProduct.isLinkedToFloatingInterestRate()) {
-            Collection<FloatingRatePeriodData> applicableRates = loanProduct.fetchInterestRates(floatingRateDTO);
-            LocalDate interestRateStartDate = DateUtils.getLocalDateOfTenant();
-            for (FloatingRatePeriodData periodData : applicableRates) {
-                LoanTermVariationsData loanTermVariation = new LoanTermVariationsData(
-                        LoanEnumerations.loanvariationType(LoanTermVariationType.INTEREST_RATE), periodData.getFromDateAsLocalDate(),
-                        periodData.getInterestRate());
-                if (interestRateStartDate.isAfter(periodData.getFromDateAsLocalDate())) {
-                    interestRateStartDate = periodData.getFromDateAsLocalDate();
-                    annualNominalInterestRate = periodData.getInterestRate();
-                }
-                loanTermVariations.add(loanTermVariation);
-            }
-        }
+        List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
+        annualNominalInterestRate = constructLoanTermVariations(floatingRateDTO, annualNominalInterestRate, loanTermVariations);
 
         final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency,
                 loanTermPeriodFrequencyType, getDisbursementDate(), getExpectedFirstRepaymentOnDate(),
                 calculatedRepaymentsStartingFromDate, getInArrearsTolerance(), this.loanRepaymentScheduleDetail,
                 this.loanProduct.isMultiDisburseLoan(), this.fixedEmiAmount, disbursementData, this.maxOutstandingLoanBalance,
-                loanVariationTermsData, getInterestChargedFromDate(), this.loanInterestRecalculationDetails,
-                calendarInstanceForInterestRecalculation, recalculationFrequencyType, compoundingCalendarInstance,
-                compoundingFrequencyType, this.loanProduct.getPrincipalThresholdForLastInstallment(),
-                this.loanProduct.getInstallmentAmountInMultiplesOf(), this.loanProduct.preCloseInterestCalculationStrategy(),
-                getApprovedPrincipal(), annualNominalInterestRate, loanTermVariations);
+                getInterestChargedFromDate(), this.loanInterestRecalculationDetails, calendarInstanceForInterestRecalculation,
+                recalculationFrequencyType, compoundingCalendarInstance, compoundingFrequencyType,
+                this.loanProduct.getPrincipalThresholdForLastInstallment(), this.loanProduct.getInstallmentAmountInMultiplesOf(),
+                this.loanProduct.preCloseInterestCalculationStrategy(), getApprovedPrincipal(), annualNominalInterestRate,
+                loanTermVariations);
         return loanApplicationTerms;
     }
 
@@ -5070,22 +5038,6 @@ public class Loan extends AbstractPersistable<Long> {
             for (LoanDisbursementDetails disbursementDetails : this.disbursementDetails) {
                 disbursementData.add(disbursementDetails.toData());
             }
-            final List<LoanTermVariationsData> loanVariationTermsData = new ArrayList<>();
-            boolean isDefaultEmiAmountReq = true;
-            for (LoanTermVariations variationTerms : this.loanTermVariations) {
-                if (variationTerms.getTermType().isEMIAmountVariation()) {
-                    if (variationTerms.getTermApplicableFrom().equals(this.getDisbursementDate().toDate())) {
-                        isDefaultEmiAmountReq = false;
-                    }
-                    loanVariationTermsData.add(variationTerms.toData());
-                }
-            }
-            if (isDefaultEmiAmountReq) {
-                LoanTermVariationsData data = new LoanTermVariationsData(null,
-                        LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), this.getDisbursementDate(),
-                        this.fixedEmiAmount);
-                loanVariationTermsData.add(data);
-            }
 
             RecalculationFrequencyType recalculationFrequencyType = null;
             InterestRecalculationCompoundingMethod compoundingMethod = null;
@@ -5099,26 +5051,13 @@ public class Loan extends AbstractPersistable<Long> {
             }
 
             BigDecimal annualNominalInterestRate = this.loanRepaymentScheduleDetail.getAnnualNominalInterestRate();
-            Collection<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
-            if (loanProduct.isLinkedToFloatingInterestRate()) {
-                Collection<FloatingRatePeriodData> applicableRates = loanProduct.fetchInterestRates(floatingRateDTO);
-                LocalDate interestRateStartDate = DateUtils.getLocalDateOfTenant();
-                for (FloatingRatePeriodData periodData : applicableRates) {
-                    LoanTermVariationsData loanTermVariation = new LoanTermVariationsData(
-                            LoanEnumerations.loanvariationType(LoanTermVariationType.INTEREST_RATE), periodData.getFromDateAsLocalDate(),
-                            periodData.getInterestRate());
-                    if (interestRateStartDate.isAfter(periodData.getFromDateAsLocalDate())) {
-                        interestRateStartDate = periodData.getFromDateAsLocalDate();
-                        annualNominalInterestRate = periodData.getInterestRate();
-                    }
-                    loanTermVariations.add(loanTermVariation);
-                }
-            }
+            List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
+            annualNominalInterestRate = constructLoanTermVariations(floatingRateDTO, annualNominalInterestRate, loanTermVariations);
 
             final LoanApplicationTerms loanApplicationTerms = LoanApplicationTerms.assembleFrom(null, loanTermFrequency,
                     loanTermPeriodFrequencyType, nthDayType, dayOfWeekType, getDisbursementDate(), getExpectedFirstRepaymentOnDate(), null,
                     getInArrearsTolerance(), this.loanRepaymentScheduleDetail, this.loanProduct.isMultiDisburseLoan(), this.fixedEmiAmount,
-                    disbursementData, this.maxOutstandingLoanBalance, loanVariationTermsData, getInterestChargedFromDate(),
+                    disbursementData, this.maxOutstandingLoanBalance, getInterestChargedFromDate(),
                     this.loanProduct.getPrincipalThresholdForLastInstallment(), this.loanProduct.getInstallmentAmountInMultiplesOf(),
                     recalculationFrequencyType, restCalendarInstance, compoundingMethod, compoundingCalendarInstance,
                     compoundingFrequencyType, this.loanProduct.preCloseInterestCalculationStrategy(), rescheduleStrategyMethod,
@@ -5132,6 +5071,15 @@ public class Loan extends AbstractPersistable<Long> {
             installment = this.getTotalOutstandingOnLoan();
         }
         return installment;
+    }
+
+    private BigDecimal constructLoanTermVariations(FloatingRateDTO floatingRateDTO, BigDecimal annualNominalInterestRate,
+            List<LoanTermVariationsData> loanTermVariations) {
+        for (LoanTermVariations variationTerms : this.loanTermVariations) {
+            loanTermVariations.add(variationTerms.toData());
+        }
+        annualNominalInterestRate = constructFloatingInterestRates(annualNominalInterestRate, floatingRateDTO, loanTermVariations);
+        return annualNominalInterestRate;
     }
 
     private LoanRepaymentScheduleInstallment getTotalOutstandingOnLoan() {
@@ -5338,11 +5286,6 @@ public class Loan extends AbstractPersistable<Long> {
 
         final List<DisbursementData> disbursementData = getDisbursmentData();
 
-        final List<LoanTermVariationsData> loanVariationTermsData = new ArrayList<LoanTermVariationsData>();
-        LoanTermVariationsData data = new LoanTermVariationsData(null,
-                LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), expectedDisbursementDate, emiAmount);
-        loanVariationTermsData.add(data);
-
         RecalculationFrequencyType recalculationFrequencyType = null;
         InterestRecalculationCompoundingMethod compoundingMethod = null;
         RecalculationFrequencyType compoundingFrequencyType = null;
@@ -5354,30 +5297,16 @@ public class Loan extends AbstractPersistable<Long> {
             rescheduleStrategyMethod = this.loanInterestRecalculationDetails.getRescheduleStrategyMethod();
         }
 
-        Collection<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
-        if (loanProduct.isLinkedToFloatingInterestRate()) {
-            Collection<FloatingRatePeriodData> applicableRates = loanProduct.fetchInterestRates(floatingRateDTO);
-            LocalDate interestRateStartDate = DateUtils.getLocalDateOfTenant();
-            for (FloatingRatePeriodData periodData : applicableRates) {
-                LoanTermVariationsData loanTermVariation = new LoanTermVariationsData(
-                        LoanEnumerations.loanvariationType(LoanTermVariationType.INTEREST_RATE), periodData.getFromDateAsLocalDate(),
-                        periodData.getInterestRate());
-                if (interestRateStartDate.isAfter(periodData.getFromDateAsLocalDate())) {
-                    interestRateStartDate = periodData.getFromDateAsLocalDate();
-                    annualNominalInterestRate = periodData.getInterestRate();
-                }
-                loanTermVariations.add(loanTermVariation);
-            }
-        }
+        List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
+        annualNominalInterestRate = constructFloatingInterestRates(annualNominalInterestRate, floatingRateDTO, loanTermVariations);
 
         return LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, nthDayType,
                 dayOfWeekType, expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,
                 inArrearsToleranceMoney, this.loanRepaymentScheduleDetail, loanProduct.isMultiDisburseLoan(), emiAmount, disbursementData,
-                maxOutstandingBalance, loanVariationTermsData, interestChargedFromDate,
-                this.loanProduct.getPrincipalThresholdForLastInstallment(), this.loanProduct.getInstallmentAmountInMultiplesOf(),
-                recalculationFrequencyType, restCalendarInstance, compoundingMethod, compoundingCalendarInstance, compoundingFrequencyType,
-                this.loanProduct.preCloseInterestCalculationStrategy(), rescheduleStrategyMethod, loanCalendar, getApprovedPrincipal(),
-                annualNominalInterestRate, loanTermVariations);
+                maxOutstandingBalance, interestChargedFromDate, this.loanProduct.getPrincipalThresholdForLastInstallment(),
+                this.loanProduct.getInstallmentAmountInMultiplesOf(), recalculationFrequencyType, restCalendarInstance, compoundingMethod,
+                compoundingCalendarInstance, compoundingFrequencyType, this.loanProduct.preCloseInterestCalculationStrategy(),
+                rescheduleStrategyMethod, loanCalendar, getApprovedPrincipal(), annualNominalInterestRate, loanTermVariations);
     }
 
     /**
@@ -5624,12 +5553,16 @@ public class Loan extends AbstractPersistable<Long> {
         return this.interestRateDifferential;
     }
 
-	public void setIsFloatingInterestRate(Boolean isFloatingInterestRate) {
-		this.isFloatingInterestRate = isFloatingInterestRate;
-	}
+    public void setIsFloatingInterestRate(Boolean isFloatingInterestRate) {
+        this.isFloatingInterestRate = isFloatingInterestRate;
+    }
 
-	public void setInterestRateDifferential(BigDecimal interestRateDifferential) {
-		this.interestRateDifferential = interestRateDifferential;
-	}
-    
+    public void setInterestRateDifferential(BigDecimal interestRateDifferential) {
+        this.interestRateDifferential = interestRateDifferential;
+    }
+
+    public List<LoanTermVariations> getLoanTermVariations() {
+        return this.loanTermVariations;
+    }
+
 }

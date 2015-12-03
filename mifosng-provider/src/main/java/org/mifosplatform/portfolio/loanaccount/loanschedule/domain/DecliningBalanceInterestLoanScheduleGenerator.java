@@ -66,12 +66,12 @@ public class DecliningBalanceInterestLoanScheduleGenerator extends AbstractLoanS
         Map<LocalDate, BigDecimal> interestRates = new HashMap<>(termVariations.size());
         for (LoanTermVariationsData loanTermVariation : termVariations) {
             if (loanTermVariation.getTermVariationType().isInterestRateVariation()
-                    && loanTermVariation.isApplicable(periodStartDate, periodEndDate, periodNumber)) {
+                    && loanTermVariation.isApplicable(periodStartDate, periodEndDate)) {
                 LocalDate fromDate = loanTermVariation.getTermApplicableFrom();
                 if (fromDate == null) {
                     fromDate = periodStartDate;
                 }
-                interestRates.put(fromDate, loanTermVariation.getTermValue());
+                interestRates.put(fromDate, loanTermVariation.getDecimalValue());
                 if (!principalVariation.containsKey(fromDate)) {
                     principalVariation.put(fromDate, balanceForInterestCalculation.zero());
                 }

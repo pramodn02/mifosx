@@ -907,17 +907,17 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             }
 
             return LoanAccountData.basicLoanDetails(id, accountNo, status, externalId, clientId, clientName, clientOfficeId, groupData,
-                    loanType, loanProductId, loanProductName, loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName, loanPurposeId, loanPurposeName,
-                    loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal, approvedPrincipal, totalOverpaid,
-                    inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments, repaymentEvery, repaymentFrequencyType,
-                    repaymentFrequencyNthDayType, repaymentFrequencyDayOfWeekType, transactionStrategyId, transactionStrategyName,
-                    amortizationType, interestRatePerPeriod, interestRateFrequencyType, annualInterestRate, interestType,
-                    isFloatingInterestRate, interestRateDifferential, interestCalculationPeriodType, expectedFirstRepaymentOnDate,
-                    graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, timeline,
-                    loanSummary, feeChargesDueAtDisbursementCharged, syncDisbursementWithMeeting, loanCounter, loanProductCounter,
-                    multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount, outstandingLoanBalance, inArrears, graceOnArrearsAgeing,
-                    isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, interestRecalculationData,
-                    createStandingInstructionAtDisbursement);
+                    loanType, loanProductId, loanProductName, loanProductDescription, isLoanProductLinkedToFloatingRate, fundId, fundName,
+                    loanPurposeId, loanPurposeName, loanOfficerId, loanOfficerName, currencyData, proposedPrincipal, principal,
+                    approvedPrincipal, totalOverpaid, inArrearsTolerance, termFrequency, termPeriodFrequencyType, numberOfRepayments,
+                    repaymentEvery, repaymentFrequencyType, repaymentFrequencyNthDayType, repaymentFrequencyDayOfWeekType,
+                    transactionStrategyId, transactionStrategyName, amortizationType, interestRatePerPeriod, interestRateFrequencyType,
+                    annualInterestRate, interestType, isFloatingInterestRate, interestRateDifferential, interestCalculationPeriodType,
+                    expectedFirstRepaymentOnDate, graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged,
+                    interestChargedFromDate, timeline, loanSummary, feeChargesDueAtDisbursementCharged, syncDisbursementWithMeeting,
+                    loanCounter, loanProductCounter, multiDisburseLoan, canDefineInstallmentAmount, fixedEmiAmount, outstandingLoanBalance,
+                    inArrears, graceOnArrearsAgeing, isNPA, daysInMonthType, daysInYearType, isInterestRecalculationEnabled,
+                    interestRecalculationData, createStandingInstructionAtDisbursement);
         }
     }
 
@@ -1558,7 +1558,8 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     private static final class LoanTermVariationsMapper implements RowMapper<LoanTermVariationsData> {
 
         public String schema() {
-            return "tv.id as id,tv.applicable_from as variationApplicableFrom,tv.term_value as termValue "
+            return "tv.id as id,tv.applicable_date as variationApplicableFrom,tv.decimal_value as decimalValue, tv.date_value as dateValue, tv.is_specific_to_installment as isSpecificToInstallment, "
+                    + "tv.is_add_installment as isAddInstallment, tv.is_remove_installment as isRemoveInstallment "
                     + "from m_loan_term_variations tv";
         }
 
@@ -1566,10 +1567,15 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
         public LoanTermVariationsData mapRow(final ResultSet rs, @SuppressWarnings("unused") final int rowNum) throws SQLException {
             final Long id = rs.getLong("id");
             final LocalDate variationApplicableFrom = JdbcSupport.getLocalDate(rs, "variationApplicableFrom");
-            final BigDecimal termValue = rs.getBigDecimal("termValue");
+            final BigDecimal decimalValue = rs.getBigDecimal("decimalValue");
+            final LocalDate dateValue = JdbcSupport.getLocalDate(rs, "dateValue");
+            final boolean isAddInstallment = rs.getBoolean("isAddInstallment");
+            final boolean isRemoveInstallment = rs.getBoolean("isRemoveInstallment");
+            final boolean isSpecificToInstallment = rs.getBoolean("isSpecificToInstallment");
 
             final LoanTermVariationsData loanTermVariationsData = new LoanTermVariationsData(id,
-                    LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), variationApplicableFrom, termValue);
+                    LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), variationApplicableFrom, decimalValue, dateValue,
+                    isSpecificToInstallment);
             return loanTermVariationsData;
         }
 
@@ -1993,11 +1999,10 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             boolean isFloatingInterestRate = loan.getIsFloatingInterestRate();
             BigDecimal interestRateDiff = loan.getInterestRateDifferential();
             List<FloatingRatePeriodData> baseLendingRatePeriods = null;
-            try{
-            	baseLendingRatePeriods = this.floatingRatesReadPlatformService.retrieveBaseLendingRate()
-            								.getRatePeriods();
-            }catch(final FloatingRateNotFoundException ex){
-            	// Do not do anything
+            try {
+                baseLendingRatePeriods = this.floatingRatesReadPlatformService.retrieveBaseLendingRate().getRatePeriods();
+            } catch (final FloatingRateNotFoundException ex) {
+                // Do not do anything
             }
             floatingRateDTO = new FloatingRateDTO(isFloatingInterestRate, loan.getDisbursementDate(), interestRateDiff,
                     baseLendingRatePeriods);

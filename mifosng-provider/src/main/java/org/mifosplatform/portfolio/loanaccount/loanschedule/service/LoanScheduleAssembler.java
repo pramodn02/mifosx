@@ -10,15 +10,22 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationDomainService;
+import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
+import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.holiday.domain.Holiday;
 import org.mifosplatform.organisation.holiday.domain.HolidayRepository;
 import org.mifosplatform.organisation.holiday.domain.HolidayStatusType;
@@ -36,6 +43,7 @@ import org.mifosplatform.portfolio.calendar.domain.Calendar;
 import org.mifosplatform.portfolio.calendar.domain.CalendarEntityType;
 import org.mifosplatform.portfolio.calendar.domain.CalendarFrequencyType;
 import org.mifosplatform.portfolio.calendar.domain.CalendarInstance;
+import org.mifosplatform.portfolio.calendar.domain.CalendarInstanceRepository;
 import org.mifosplatform.portfolio.calendar.domain.CalendarRepository;
 import org.mifosplatform.portfolio.calendar.domain.CalendarType;
 import org.mifosplatform.portfolio.calendar.exception.CalendarNotFoundException;
@@ -57,10 +65,13 @@ import org.mifosplatform.portfolio.loanaccount.api.LoanApiConstants;
 import org.mifosplatform.portfolio.loanaccount.data.DisbursementData;
 import org.mifosplatform.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.mifosplatform.portfolio.loanaccount.data.LoanTermVariationsData;
+import org.mifosplatform.portfolio.loanaccount.data.ScheduleGeneratorDTO;
+import org.mifosplatform.portfolio.loanaccount.domain.Loan;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanDisbursementDetails;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariationType;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariations;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanApplicationDateException;
@@ -70,7 +81,9 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanApplicati
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
+import org.mifosplatform.portfolio.loanaccount.serialization.VariableLoanScheduleFromApiJsonValidator;
 import org.mifosplatform.portfolio.loanaccount.service.LoanChargeAssembler;
+import org.mifosplatform.portfolio.loanaccount.service.LoanUtilService;
 import org.mifosplatform.portfolio.loanproduct.LoanProductConstants;
 import org.mifosplatform.portfolio.loanproduct.domain.AmortizationMethod;
 import org.mifosplatform.portfolio.loanproduct.domain.InterestCalculationPeriodMethod;
@@ -80,9 +93,11 @@ import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductInterestRecalculationDetails;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRelatedDetail;
 import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
+import org.mifosplatform.portfolio.loanproduct.domain.LoanProductVariableInstallmentConfig;
 import org.mifosplatform.portfolio.loanproduct.domain.RecalculationFrequencyType;
 import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
 import org.mifosplatform.portfolio.loanproduct.service.LoanEnumerations;
+import org.mifosplatform.useradministration.domain.AppUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -106,6 +121,10 @@ public class LoanScheduleAssembler {
     private final GroupRepositoryWrapper groupRepository;
     private final WorkingDaysRepositoryWrapper workingDaysRepository;
     private final FloatingRatesReadPlatformService floatingRatesReadPlatformService;
+    private final VariableLoanScheduleFromApiJsonValidator variableLoanScheduleFromApiJsonValidator;
+    private final CalendarInstanceRepository calendarInstanceRepository;
+    private final PlatformSecurityContext context;
+    private final LoanUtilService loanUtilService;
 
     @Autowired
     public LoanScheduleAssembler(final FromJsonHelper fromApiJsonHelper, final LoanProductRepository loanProductRepository,
@@ -115,7 +134,10 @@ public class LoanScheduleAssembler {
             final HolidayRepository holidayRepository, final ConfigurationDomainService configurationDomainService,
             final ClientRepositoryWrapper clientRepository, final GroupRepositoryWrapper groupRepository,
             final WorkingDaysRepositoryWrapper workingDaysRepository,
-            final FloatingRatesReadPlatformService floatingRatesReadPlatformService) {
+            final FloatingRatesReadPlatformService floatingRatesReadPlatformService,
+            final VariableLoanScheduleFromApiJsonValidator variableLoanScheduleFromApiJsonValidator,
+            final CalendarInstanceRepository calendarInstanceRepository, final PlatformSecurityContext context,
+            final LoanUtilService loanUtilService) {
         this.fromApiJsonHelper = fromApiJsonHelper;
         this.loanProductRepository = loanProductRepository;
         this.applicationCurrencyRepository = applicationCurrencyRepository;
@@ -129,6 +151,10 @@ public class LoanScheduleAssembler {
         this.groupRepository = groupRepository;
         this.workingDaysRepository = workingDaysRepository;
         this.floatingRatesReadPlatformService = floatingRatesReadPlatformService;
+        this.variableLoanScheduleFromApiJsonValidator = variableLoanScheduleFromApiJsonValidator;
+        this.calendarInstanceRepository = calendarInstanceRepository;
+        this.context = context;
+        this.loanUtilService = loanUtilService;
     }
 
     public LoanApplicationTerms assembleLoanTerms(final JsonElement element) {
@@ -256,11 +282,6 @@ public class LoanScheduleAssembler {
 
         final List<DisbursementData> disbursementDatas = fetchDisbursementData(element.getAsJsonObject());
 
-        final List<LoanTermVariationsData> loanVariationTermsData = new ArrayList<>();
-        LoanTermVariationsData data = new LoanTermVariationsData(null,
-                LoanEnumerations.loanvariationType(LoanTermVariationType.EMI_AMOUNT), expectedDisbursementDate, emiAmount);
-        loanVariationTermsData.add(data);
-
         /**
          * Interest recalculation settings copy from product definition
          */
@@ -307,28 +328,29 @@ public class LoanScheduleAssembler {
 
         final Integer installmentAmountInMultiplesOf = loanProduct.getInstallmentAmountInMultiplesOf();
 
-        Collection<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
+        List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
         if (loanProduct.isLinkedToFloatingInterestRate()) {
             final BigDecimal interestRateDiff = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed(
                     LoanApiConstants.interestRateDifferentialParameterName, element);
             final Boolean isFloatingInterestRate = this.fromApiJsonHelper.extractBooleanNamed(
                     LoanApiConstants.isFloatingInterestRateParameterName, element);
             List<FloatingRatePeriodData> baseLendingRatePeriods = null;
-            try{
-            	baseLendingRatePeriods = this.floatingRatesReadPlatformService.retrieveBaseLendingRate()
-            								.getRatePeriods();
-            }catch(final FloatingRateNotFoundException ex){
-            	// Do not do anything
+            try {
+                baseLendingRatePeriods = this.floatingRatesReadPlatformService.retrieveBaseLendingRate().getRatePeriods();
+            } catch (final FloatingRateNotFoundException ex) {
+                // Do not do anything
             }
             FloatingRateDTO floatingRateDTO = new FloatingRateDTO(isFloatingInterestRate, expectedDisbursementDate, interestRateDiff,
                     baseLendingRatePeriods);
             Collection<FloatingRatePeriodData> applicableRates = loanProduct.fetchInterestRates(floatingRateDTO);
 
             LocalDate interestRateStartDate = DateUtils.getLocalDateOfTenant();
+            final LocalDate dateValue = null;
+            final boolean isSpecificToInstallment = false;
             for (FloatingRatePeriodData periodData : applicableRates) {
                 LoanTermVariationsData loanTermVariation = new LoanTermVariationsData(
                         LoanEnumerations.loanvariationType(LoanTermVariationType.INTEREST_RATE), periodData.getFromDateAsLocalDate(),
-                        periodData.getInterestRate());
+                        periodData.getInterestRate(), dateValue, isSpecificToInstallment);
                 if (interestRateStartDate.isAfter(periodData.getFromDateAsLocalDate())) {
                     interestRateStartDate = periodData.getFromDateAsLocalDate();
                     annualNominalInterestRate = periodData.getInterestRate();
@@ -342,11 +364,10 @@ public class LoanScheduleAssembler {
                 interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
                 principalMoney, expectedDisbursementDate, repaymentsStartingFromDate, calculatedRepaymentsStartingFromDate,
                 graceOnPrincipalPayment, graceOnInterestPayment, graceOnInterestCharged, interestChargedFromDate, inArrearsToleranceMoney,
-                loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance, loanVariationTermsData,
-                graceOnArrearsAgeing, daysInMonthType, daysInYearType, isInterestRecalculationEnabled, recalculationFrequencyType,
-                restCalendarInstance, compoundingCalendarInstance, compoundingFrequencyType, principalThresholdForLastInstalment,
-                installmentAmountInMultiplesOf, loanProduct.preCloseInterestCalculationStrategy(), calendar, BigDecimal.ZERO,
-                loanTermVariations);
+                loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance, graceOnArrearsAgeing,
+                daysInMonthType, daysInYearType, isInterestRecalculationEnabled, recalculationFrequencyType, restCalendarInstance,
+                compoundingCalendarInstance, compoundingFrequencyType, principalThresholdForLastInstalment, installmentAmountInMultiplesOf,
+                loanProduct.preCloseInterestCalculationStrategy(), calendar, BigDecimal.ZERO, loanTermVariations);
     }
 
     private CalendarInstance createInterestRecalculationCalendarInstance(final LocalDate calendarStartDate,
@@ -532,6 +553,184 @@ public class LoanScheduleAssembler {
         return loanScheduleGenerator.calculatePrepaymentAmount(currency, onDate, loanApplicationTerms, mc, loanCharges, holidayDetailDTO,
                 loanTransactions, loanRepaymentScheduleTransactionProcessor);
 
+    }
+
+    public void assempleVariableScheduleFrom(final Loan loan, final String json) {
+        this.variableLoanScheduleFromApiJsonValidator.validateSchedule(json, loan);
+
+        List<LoanTermVariations> variations = loan.getLoanTermVariations();
+        extractLoanTermVariations(loan, json, variations);
+
+        /*
+         * List<LoanTermVariationsData> loanTermVariationsDatas = new
+         * ArrayList<>();
+         * loanTermVariationsDatas.addAll(loanApplicationTerms.getLoanTermVariations
+         * ().getExceptionData()); loanApplicationTerms =
+         * LoanApplicationTerms.assembleFrom(loanApplicationTerms,
+         * loanTermVariationsDatas);
+         */
+
+        // date validations
+        List<LoanRepaymentScheduleInstallment> installments = loan.fetchRepaymentScheduleInstallments();
+        Set<LocalDate> dueDates = new TreeSet<>();
+        LocalDate graceApplicable = loan.getExpectedDisbursedOnLocalDate();
+        int graceOnPrincipal = loan.getLoanProductRelatedDetail().graceOnPrincipalPayment();
+        for (LoanRepaymentScheduleInstallment installment : installments) {
+            dueDates.add(installment.getDueDate());
+            if (graceOnPrincipal == installment.getInstallmentNumber()) {
+                graceApplicable = installment.getDueDate();
+            }
+        }
+        Set<LocalDate> actualDueDates = new TreeSet<>(dueDates);
+        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
+
+        for (LoanTermVariations termVariations : variations) {
+            switch (termVariations.getTermType()) {
+                case INSERT_INSTALLMENT:
+                    dueDates.add(termVariations.fetchTermApplicaDate());
+                    if (!graceApplicable.isBefore(termVariations.fetchTermApplicaDate())) {
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.insert.not.allowed.before.grace.period", "Loan schedule insert request invalid");
+                    }
+                break;
+                case DELETE_INSTALLMENT:
+                    if (dueDates.contains(termVariations.fetchTermApplicaDate())) {
+                        dueDates.remove(termVariations.fetchTermApplicaDate());
+                    } else {
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("variable.schedule.remove.date.invalid",
+                                "Loan schedule remove request invalid");
+                    }
+                break;
+                case DUE_DATE:
+                    dueDates.remove(termVariations.fetchTermApplicaDate());
+                    dueDates.add(termVariations.fetchDateValue());
+                break;
+                case PRINCIPAL_AMOUNT:
+                case EMI_AMOUNT:
+                    if (!graceApplicable.isBefore(termVariations.fetchTermApplicaDate())) {
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.amount.update.not.allowed.before.grace.period", "Loan schedule modify request invalid");
+                    }
+                break;
+
+                default:
+                break;
+
+            }
+
+        }
+
+        LoanProductVariableInstallmentConfig installmentConfig = loan.loanProduct().loanProductVariableInstallmentConfig();
+        final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
+                CalendarEntityType.LOANS.getValue());
+        Calendar loanCalendar = null;
+        if (loanCalendarInstance != null) {
+            loanCalendar = loanCalendarInstance.getCalendar();
+        }
+        final Integer minGap = installmentConfig.getMinimumGap();
+        final Integer maxGap = installmentConfig.getMaximumGap();
+
+        LocalDate previousDate = loan.getDisbursementDate();
+        for (LocalDate duedate : dueDates) {
+            int gap = Days.daysBetween(previousDate, duedate).getDays();
+            if (gap >= minGap || (maxGap != null && gap <= maxGap)) {
+                baseDataValidator.reset().value(duedate)
+                        .failWithCodeNoParameterAddedToErrorCode("variable.schedule.date.invalid", "Loan schedule date invalid");
+            } else if (loanCalendar != null && !actualDueDates.contains(duedate) && !loanCalendar.isValidRecurringDate(duedate)) {
+                baseDataValidator
+                        .reset()
+                        .value(duedate)
+                        .failWithCodeNoParameterAddedToErrorCode("variable.schedule.date.not.meeting.date",
+                                "Loan schedule date not in sync with meeting date");
+            }
+        }
+        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
+
+        ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan);
+        AppUser currentUser = this.context.getAuthenticatedUserIfPresent();
+        loan.regenerateRepaymentSchedule(scheduleGeneratorDTO, currentUser);
+    }
+
+    private void extractLoanTermVariations(final Loan loan, final String json, final List<LoanTermVariations> loanTermVariations) {
+        final JsonElement element = this.fromApiJsonHelper.parse(json);
+        if (loan.loanProduct().allowVariabeInstallments()) {
+            if (element.isJsonObject() && this.fromApiJsonHelper.parameterExists(LoanApiConstants.exceptionParamName, element)) {
+                final JsonObject topLevelJsonElement = element.getAsJsonObject();
+                final String dateFormat = this.fromApiJsonHelper.extractDateFormatParameter(topLevelJsonElement);
+                final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(topLevelJsonElement);
+                final JsonObject exceptionObject = topLevelJsonElement.getAsJsonObject(LoanApiConstants.exceptionParamName);
+                if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.modifiedinstallmentsParamName, exceptionObject)
+                        && exceptionObject.get(LoanApiConstants.modifiedinstallmentsParamName).isJsonArray()) {
+                    final JsonArray modificationsArray = exceptionObject.get(LoanApiConstants.modifiedinstallmentsParamName)
+                            .getAsJsonArray();
+                    extractLoanTermVariations(loan, dateFormat, locale, modificationsArray, false, false, loanTermVariations);
+                }
+                if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.newinstallmentsParamName, exceptionObject)
+                        && exceptionObject.get(LoanApiConstants.newinstallmentsParamName).isJsonArray()) {
+                    final JsonArray array = exceptionObject.get(LoanApiConstants.newinstallmentsParamName).getAsJsonArray();
+                    extractLoanTermVariations(loan, dateFormat, locale, array, true, false, loanTermVariations);
+                }
+                if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.deletedinstallmentsParamName, exceptionObject)
+                        && exceptionObject.get(LoanApiConstants.deletedinstallmentsParamName).isJsonArray()) {
+                    final JsonArray array = exceptionObject.get(LoanApiConstants.deletedinstallmentsParamName).getAsJsonArray();
+                    extractLoanTermVariations(loan, dateFormat, locale, array, false, true, loanTermVariations);
+                }
+            }
+        }
+    }
+
+    private void extractLoanTermVariations(final Loan loan, final String dateFormat, final Locale locale,
+            final JsonArray modificationsArray, final boolean isInsertInstallment, final boolean isDeleteInstallment,
+            final List<LoanTermVariations> loanTermVariations) {
+        for (int i = 1; i <= modificationsArray.size(); i++) {
+            final JsonObject arrayElement = modificationsArray.get(i - 1).getAsJsonObject();
+            BigDecimal decimalValue = null;
+            LoanTermVariationType decimalValueVariationType = LoanTermVariationType.INVALID;
+            if (loan.getLoanProductRelatedDetail().getAmortizationMethod().isEqualInstallment()) {
+                decimalValue = this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.installmentAmountParamName, arrayElement,
+                        locale);
+                decimalValueVariationType = LoanTermVariationType.EMI_AMOUNT;
+            } else {
+                decimalValue = this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.principalParamName, arrayElement, locale);
+                decimalValueVariationType = LoanTermVariationType.PRINCIPAL_AMOUNT;
+            }
+
+            LocalDate duedateLocalDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.dueDateParamName, arrayElement,
+                    dateFormat, locale);
+            Date dueDate = duedateLocalDate.toDate();
+
+            LocalDate modifiedDuedateLocalDate = this.fromApiJsonHelper.extractLocalDateNamed(LoanApiConstants.modifiedDueDateParamName,
+                    arrayElement, dateFormat, locale);
+            Date modifiedDuedate = null;
+            if (modifiedDuedateLocalDate != null) {
+                modifiedDuedate = modifiedDuedateLocalDate.toDate();
+            }
+            boolean isSpecificToInstallment = true;
+            if (isInsertInstallment) {
+                LoanTermVariations data = new LoanTermVariations(LoanTermVariationType.INSERT_INSTALLMENT.getValue(), dueDate,
+                        decimalValue, modifiedDuedate, isSpecificToInstallment, loan);
+                loanTermVariations.add(data);
+            } else if (isDeleteInstallment) {
+                LoanTermVariations data = new LoanTermVariations(LoanTermVariationType.DELETE_INSTALLMENT.getValue(), dueDate,
+                        decimalValue, modifiedDuedate, isSpecificToInstallment, loan);
+                loanTermVariations.add(data);
+            } else {
+                if (modifiedDuedate != null) {
+                    BigDecimal amountData = null;
+                    LoanTermVariations data = new LoanTermVariations(LoanTermVariationType.DUE_DATE.getValue(), dueDate, amountData,
+                            modifiedDuedate, isSpecificToInstallment, loan);
+                    loanTermVariations.add(data);
+                }
+                if (decimalValue != null) {
+                    Date date = null;
+                    LoanTermVariations data = new LoanTermVariations(decimalValueVariationType.getValue(), dueDate, decimalValue, date,
+                            isSpecificToInstallment, loan);
+                    loanTermVariations.add(data);
+                }
+            }
+
+        }
     }
 
     private void validateDisbursementDateIsOnNonWorkingDay(final LocalDate disbursementDate, final WorkingDays workingDays) {
