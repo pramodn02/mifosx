@@ -64,7 +64,7 @@ public class LoanScheduleApiResource {
             @QueryParam("command") final String commandParam, @Context final UriInfo uriInfo, final String apiRequestBodyAsJson) {
 
         if (is(commandParam, "calculateLoanSchedule")) {
-
+            this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
             final LoanScheduleData loanSchedule = this.calculationPlatformService.generateLoanScheduleForVariableInstallmentRequest(loanId,
                     apiRequestBodyAsJson);
 

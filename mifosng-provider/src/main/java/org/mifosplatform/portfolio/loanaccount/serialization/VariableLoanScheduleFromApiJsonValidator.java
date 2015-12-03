@@ -92,7 +92,7 @@ public class VariableLoanScheduleFromApiJsonValidator {
                 }
             }
         } else {
-            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("variable.schedule.not.supported",
+            baseDataValidator.reset().failWithCode("variable.schedule.not.supported",
                     "Loan schedule modification not allowed");
         }
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }

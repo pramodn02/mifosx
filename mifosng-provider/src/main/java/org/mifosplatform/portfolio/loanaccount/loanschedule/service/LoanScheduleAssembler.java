@@ -574,7 +574,10 @@ public class LoanScheduleAssembler {
         List<LoanRepaymentScheduleInstallment> installments = loan.fetchRepaymentScheduleInstallments();
         Set<LocalDate> dueDates = new TreeSet<>();
         LocalDate graceApplicable = loan.getExpectedDisbursedOnLocalDate();
-        int graceOnPrincipal = loan.getLoanProductRelatedDetail().graceOnPrincipalPayment();
+        Integer graceOnPrincipal = loan.getLoanProductRelatedDetail().graceOnPrincipalPayment();
+        if(graceOnPrincipal == null){
+            graceOnPrincipal = 0;
+        }
         for (LoanRepaymentScheduleInstallment installment : installments) {
             dueDates.add(installment.getDueDate());
             if (graceOnPrincipal == installment.getInstallmentNumber()) {
@@ -634,7 +637,8 @@ public class LoanScheduleAssembler {
         LocalDate previousDate = loan.getDisbursementDate();
         for (LocalDate duedate : dueDates) {
             int gap = Days.daysBetween(previousDate, duedate).getDays();
-            if (gap >= minGap || (maxGap != null && gap <= maxGap)) {
+            previousDate = duedate;
+            if (gap < minGap || (maxGap != null && gap > maxGap)) {
                 baseDataValidator.reset().value(duedate)
                         .failWithCodeNoParameterAddedToErrorCode("variable.schedule.date.invalid", "Loan schedule date invalid");
             } else if (loanCalendar != null && !actualDueDates.contains(duedate) && !loanCalendar.isValidRecurringDate(duedate)) {
