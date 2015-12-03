@@ -36,7 +36,8 @@ import com.google.gson.reflect.TypeToken;
 @Component
 public class VariableLoanScheduleFromApiJsonValidator {
 
-    final Set<String> variableSchedulesupportedParameters = new HashSet<>(Arrays.asList(LoanApiConstants.exceptionParamName));
+    final Set<String> variableSchedulesupportedParameters = new HashSet<>(Arrays.asList(LoanApiConstants.exceptionParamName,
+            LoanApiConstants.localeParameterName, LoanApiConstants.dateFormatParameterName));
     final Set<String> variableSchedulesupportedArrayParameters = new HashSet<>(Arrays.asList(
             LoanApiConstants.modifiedinstallmentsParamName, LoanApiConstants.newinstallmentsParamName,
             LoanApiConstants.deletedinstallmentsParamName));
