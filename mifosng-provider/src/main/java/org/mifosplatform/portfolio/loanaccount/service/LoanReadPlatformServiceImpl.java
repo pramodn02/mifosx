@@ -1468,30 +1468,24 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     }
 
     @Override
-    public Collection<OverdueLoanScheduleData> retrieveAllLoansWithOverdueInstallments(final Long penaltyWaitPeriod, final Boolean backdatePenalties) {
+    public Collection<OverdueLoanScheduleData> retrieveAllLoansWithOverdueInstallments(final Long penaltyWaitPeriod,
+            final Boolean backdatePenalties) {
         final MusoniOverdueLoanScheduleMapper rm = new MusoniOverdueLoanScheduleMapper();
 
         final StringBuilder sqlBuilder = new StringBuilder(400);
-        sqlBuilder
-                .append("select ")
-                .append(rm.schema())
-                .append(" where DATE_SUB(CURDATE(),INTERVAL ? DAY) > ls.duedate ")
-                .append( " and ls.completed_derived <> 1 and mc.charge_applies_to_enum =1 ")
+        sqlBuilder.append("select ").append(rm.schema()).append(" where DATE_SUB(CURDATE(),INTERVAL ? DAY) > ls.duedate ")
+                .append(" and ls.completed_derived <> 1 and mc.charge_applies_to_enum =1 ")
                 .append(" and mc.charge_time_enum = 9 and ml.loan_status_id = 300 ");
 
-
-        if(backdatePenalties)
-        {
+        if (backdatePenalties) {
             return this.jdbcTemplate.query(sqlBuilder.toString(), rm, new Object[] { penaltyWaitPeriod });
-        }
-        else
-        {
-            // Only apply for duedate = yesterday (so that we don't apply penalties on the duedate itself)
+        } else {
+            // Only apply for duedate = yesterday (so that we don't apply
+            // penalties on the duedate itself)
             sqlBuilder.append(" and ls.duedate >= DATE_SUB(CURDATE(),INTERVAL (? + 1) DAY)");
 
             return this.jdbcTemplate.query(sqlBuilder.toString(), rm, new Object[] { penaltyWaitPeriod, penaltyWaitPeriod });
         }
-
 
     }
 
@@ -1558,8 +1552,7 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
     private static final class LoanTermVariationsMapper implements RowMapper<LoanTermVariationsData> {
 
         public String schema() {
-            return "tv.id as id,tv.applicable_date as variationApplicableFrom,tv.decimal_value as decimalValue, tv.date_value as dateValue, tv.is_specific_to_installment as isSpecificToInstallment, "
-                    + "tv.is_add_installment as isAddInstallment, tv.is_remove_installment as isRemoveInstallment "
+            return "tv.id as id,tv.applicable_date as variationApplicableFrom,tv.decimal_value as decimalValue, tv.date_value as dateValue, tv.is_specific_to_installment as isSpecificToInstallment "
                     + "from m_loan_term_variations tv";
         }
 
@@ -1569,8 +1562,6 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService {
             final LocalDate variationApplicableFrom = JdbcSupport.getLocalDate(rs, "variationApplicableFrom");
             final BigDecimal decimalValue = rs.getBigDecimal("decimalValue");
             final LocalDate dateValue = JdbcSupport.getLocalDate(rs, "dateValue");
-            final boolean isAddInstallment = rs.getBoolean("isAddInstallment");
-            final boolean isRemoveInstallment = rs.getBoolean("isRemoveInstallment");
             final boolean isSpecificToInstallment = rs.getBoolean("isSpecificToInstallment");
 
             final LoanTermVariationsData loanTermVariationsData = new LoanTermVariationsData(id,

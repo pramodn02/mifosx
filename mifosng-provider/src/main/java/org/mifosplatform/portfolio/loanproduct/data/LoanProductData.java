@@ -82,7 +82,6 @@ public class LoanProductData {
     private final boolean allowVariableInstallments;
     private final Long minimumGap;
     private final Long maximumGap;
-    private final BigDecimal minimumInstallmentAmount;
 
     // settings
     private final EnumOptionData amortizationType;
@@ -194,7 +193,6 @@ public class LoanProductData {
         final boolean isVariableInstallmentsAllowed = false;
         final Long minimumGap = null;
         final Long maximumGap = null;
-        final BigDecimal minimumInstallment = null;
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
         final EnumOptionData amortizationType = null;
@@ -249,8 +247,7 @@ public class LoanProductData {
                 principalThresholdForLastInstallment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount,
                 installmentAmountInMultiplesOf, loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId,
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
-                maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap,
-                maximumGap, minimumInstallment);
+                maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap);
 
     }
 
@@ -280,7 +277,6 @@ public class LoanProductData {
         final boolean isVariableInstallmentsAllowed = false;
         final Long minimumGap = null;
         final Long maximumGap = null;
-        final BigDecimal minimumInstallment = null;
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
         final EnumOptionData amortizationType = null;
@@ -337,8 +333,7 @@ public class LoanProductData {
                 principalThresholdForLastInstallment, accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount,
                 installmentAmountInMultiplesOf, loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId,
                 floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
-                maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed,
-                minimumGap, maximumGap, minimumInstallment);
+                maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap);
 
     }
 
@@ -372,7 +367,6 @@ public class LoanProductData {
         final boolean isVariableInstallmentsAllowed = false;
         final Long minimumGap = null;
         final Long maximumGap = null;
-        final BigDecimal minimumInstallment = null;
         final EnumOptionData repaymentFrequencyType = LoanEnumerations.repaymentFrequencyType(PeriodFrequencyType.MONTHS);
         final EnumOptionData interestRateFrequencyType = LoanEnumerations.interestRateFrequencyType(PeriodFrequencyType.MONTHS);
         final EnumOptionData amortizationType = LoanEnumerations.amortizationType(AmortizationMethod.EQUAL_INSTALLMENTS);
@@ -433,7 +427,7 @@ public class LoanProductData {
                 accountMovesOutOfNPAOnlyOnArrearsCompletion, canDefineInstallmentAmount, installmentAmountInMultiplesOf,
                 loanProductConfigurableAttributes, isLinkedToFloatingInterestRates, floatingRateId, floatingRateName,
                 interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate, maxDifferentialLendingRate,
-                isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap, minimumInstallment);
+                isFloatingInterestRateCalculationAllowed, isVariableInstallmentsAllowed, minimumGap, maximumGap);
 
     }
 
@@ -472,7 +466,7 @@ public class LoanProductData {
             boolean isLinkedToFloatingInterestRates, Integer floatingRateId, String floatingRateName, BigDecimal interestRateDifferential,
             BigDecimal minDifferentialLendingRate, BigDecimal defaultDifferentialLendingRate, BigDecimal maxDifferentialLendingRate,
             boolean isFloatingInterestRateCalculationAllowed, final boolean isVariableInstallmentsAllowed,
-            final Long minimumGapBetweenInstallments, final Long maximumGapBetweenInstallments, final BigDecimal minimumInstallmentsAmount) {
+            final Long minimumGapBetweenInstallments, final Long maximumGapBetweenInstallments) {
         this.id = id;
         this.name = name;
         this.shortName = shortName;
@@ -501,10 +495,9 @@ public class LoanProductData {
         this.defaultDifferentialLendingRate = defaultDifferentialLendingRate;
         this.maxDifferentialLendingRate = maxDifferentialLendingRate;
         this.isFloatingInterestRateCalculationAllowed = isFloatingInterestRateCalculationAllowed;
-        this.allowVariableInstallments = isVariableInstallmentsAllowed ;
-        this.minimumGap = minimumGapBetweenInstallments ;
-        this.maximumGap = maximumGapBetweenInstallments ;
-        this.minimumInstallmentAmount = minimumInstallmentsAmount ;
+        this.allowVariableInstallments = isVariableInstallmentsAllowed;
+        this.minimumGap = minimumGapBetweenInstallments;
+        this.maximumGap = maximumGapBetweenInstallments;
         this.repaymentFrequencyType = repaymentFrequencyType;
         this.interestRateFrequencyType = interestRateFrequencyType;
         this.amortizationType = amortizationType;
@@ -612,10 +605,9 @@ public class LoanProductData {
         this.defaultDifferentialLendingRate = productData.defaultDifferentialLendingRate;
         this.maxDifferentialLendingRate = productData.maxDifferentialLendingRate;
         this.isFloatingInterestRateCalculationAllowed = productData.isFloatingInterestRateCalculationAllowed;
-        this.allowVariableInstallments = productData.allowVariableInstallments ;
-        this.minimumGap = productData.minimumGap ;
-        this.maximumGap = productData.maximumGap ;
-        this.minimumInstallmentAmount = productData.minimumInstallmentAmount ;
+        this.allowVariableInstallments = productData.allowVariableInstallments;
+        this.minimumGap = productData.minimumGap;
+        this.maximumGap = productData.maximumGap;
         this.repaymentFrequencyType = productData.repaymentFrequencyType;
         this.interestRateFrequencyType = productData.interestRateFrequencyType;
         this.amortizationType = productData.amortizationType;

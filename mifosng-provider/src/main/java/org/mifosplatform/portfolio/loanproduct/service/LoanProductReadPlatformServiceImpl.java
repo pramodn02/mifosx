@@ -203,8 +203,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + "lfr.is_floating_interest_rate_calculation_allowed as isFloatingInterestRateCalculationAllowed, "
                     + "lp.allow_variabe_installments as isVariableIntallmentsAllowed, "
                     + "lvi.minimum_gap as minimumGap, "
-                    + "lvi.maximum_gap as maximumGap, "
-                    + "lvi.minimum_installment_amount as minimumInstallmentAmount "
+                    + "lvi.maximum_gap as maximumGap "
                     + " from m_product_loan lp "
                     + " left join m_fund f on f.id = lp.fund_id "
                     + " left join m_product_loan_recalculation_details lpr on lpr.product_id=lp.id "
@@ -213,7 +212,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     + " left join m_product_loan_configurable_attributes lca on lca.loan_product_id = lp.id "
                     + " left join m_product_loan_floating_rates as lfr on lfr.loan_product_id = lp.id "
                     + " left join m_floating_rates as fr on lfr.floating_rates_id = fr.id "
-                    + " left join m_product_loan_variable_installments as lvi on lvi.loan_product_id = lp.id "
+                    + " left join m_product_loan_variable_installment_config as lvi on lvi.loan_product_id = lp.id "
                     + " join m_currency curr on curr.code = lp.currency_code";
 
         }
@@ -278,7 +277,6 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final boolean isVariableIntallmentsAllowed = rs.getBoolean("isVariableIntallmentsAllowed");
             final Long minimumGap = rs.getLong("minimumGap");
             final Long maximumGap = rs.getLong("maximumGap");
-            final BigDecimal minimumInstallmentAmount = rs.getBigDecimal("minimumInstallmentAmount");
 
             final int repaymentFrequencyTypeId = JdbcSupport.getInteger(rs, "repaymentPeriodFrequency");
             final EnumOptionData repaymentFrequencyType = LoanEnumerations.repaymentFrequencyType(repaymentFrequencyTypeId);
@@ -409,7 +407,7 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
                     installmentAmountInMultiplesOf, allowAttributeOverrides, isLinkedToFloatingInterestRates, floatingRateId,
                     floatingRateName, interestRateDifferential, minDifferentialLendingRate, defaultDifferentialLendingRate,
                     maxDifferentialLendingRate, isFloatingInterestRateCalculationAllowed, isVariableIntallmentsAllowed, minimumGap,
-                    maximumGap, minimumInstallmentAmount);
+                    maximumGap);
         }
     }
 

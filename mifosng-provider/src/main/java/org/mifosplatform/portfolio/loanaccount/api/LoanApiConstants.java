@@ -52,10 +52,10 @@ public interface LoanApiConstants {
     public static final String isFloatingInterestRate = "isFloatingInterestRate";
     public static final String interestRateDifferential = "interestRateDifferential";
 
-    public static final String exceptionParamName = "exception";
+    public static final String exceptionParamName = "exceptions";
     public static final String modifiedinstallmentsParamName = "modifiedinstallments";
     public static final String newinstallmentsParamName = "newinstallments";
-    public static final String deletedinstallmentsParamName = "exception";
+    public static final String deletedinstallmentsParamName = "deletedinstallments";
     public static final String dueDateParamName = "dueDate";
     public static final String modifiedDueDateParamName = "modifiedDueDate";
     public static final String principalParamName = "principal";
