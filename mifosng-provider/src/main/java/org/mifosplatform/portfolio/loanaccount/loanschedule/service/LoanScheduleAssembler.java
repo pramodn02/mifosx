@@ -564,7 +564,7 @@ public class LoanScheduleAssembler {
         List<LoanTermVariations> newVariations = new ArrayList<>();
         extractLoanTermVariations(loan, json, newVariations);
 
-        if (!newVariations.isEmpty()) {
+        if (!variations.isEmpty()) {
             List<LoanTermVariations> retainVariations = adjustExistingVariations(variations, newVariations);
             newVariations = retainVariations;
         }

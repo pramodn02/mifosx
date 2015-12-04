@@ -58,7 +58,6 @@ public class LoanScheduleApiResource {
     }
 
     @POST
-    @Path("exceptions")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String calculateLoanScheduleOrSubmitVariableSchedule(@PathParam("loanId") final Long loanId,
