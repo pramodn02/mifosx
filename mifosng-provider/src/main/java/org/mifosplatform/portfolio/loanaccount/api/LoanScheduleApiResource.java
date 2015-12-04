@@ -71,7 +71,7 @@ public class LoanScheduleApiResource {
 
             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
             return this.toApiJsonSerializer.serialize(settings, loanSchedule, new HashSet<String>());
-        } else if (is(commandParam, "addVariations ")) {
+        } else if (is(commandParam, "addVariations")) {
             commandRequest = new CommandWrapperBuilder().createScheduleExceptions(loanId).withJson(apiRequestBodyAsJson).build();
         } else if (is(commandParam, "deleteVariations")) {
             commandRequest = new CommandWrapperBuilder().deleteScheduleExceptions(loanId).build();

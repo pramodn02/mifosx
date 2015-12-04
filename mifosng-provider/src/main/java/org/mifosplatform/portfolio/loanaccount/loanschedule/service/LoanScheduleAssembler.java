@@ -564,8 +564,10 @@ public class LoanScheduleAssembler {
         List<LoanTermVariations> newVariations = new ArrayList<>();
         extractLoanTermVariations(loan, json, newVariations);
 
+        final Map<LocalDate, LocalDate> adjustDueDateVariations = new HashMap<>();
+
         if (!variations.isEmpty()) {
-            List<LoanTermVariations> retainVariations = adjustExistingVariations(variations, newVariations);
+            List<LoanTermVariations> retainVariations = adjustExistingVariations(variations, newVariations, adjustDueDateVariations);
             newVariations = retainVariations;
         }
         variations.addAll(newVariations);
@@ -587,12 +589,25 @@ public class LoanScheduleAssembler {
         if (graceOnPrincipal == null) {
             graceOnPrincipal = 0;
         }
+        LocalDate lastDate = loan.getExpectedDisbursedOnLocalDate();
         for (LoanRepaymentScheduleInstallment installment : installments) {
             dueDates.add(installment.getDueDate());
+            if (lastDate.isBefore(installment.getDueDate())) {
+                lastDate = installment.getDueDate();
+            }
             if (graceOnPrincipal == installment.getInstallmentNumber()) {
                 graceApplicable = installment.getDueDate();
             }
         }
+        Collection<LocalDate> keySet = adjustDueDateVariations.keySet();
+        dueDates.addAll(keySet);
+        for (final LocalDate date : keySet) {
+            LocalDate removeDate = adjustDueDateVariations.get(date);
+            if (removeDate != null) {
+                dueDates.remove(removeDate);
+            }
+        }
+
         Set<LocalDate> actualDueDates = new TreeSet<>(dueDates);
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
@@ -605,6 +620,10 @@ public class LoanScheduleAssembler {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
                                 "variable.schedule.insert.not.allowed.before.grace.period", "Loan schedule insert request invalid");
                     }
+                    if (termVariations.fetchTermApplicaDate().isAfter(lastDate)) {
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.insert.not.allowed.after.last.period.date", "Loan schedule insert request invalid");
+                    }
                 break;
                 case DELETE_INSTALLMENT:
                     if (dueDates.contains(termVariations.fetchTermApplicaDate())) {
@@ -613,10 +632,17 @@ public class LoanScheduleAssembler {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("variable.schedule.remove.date.invalid",
                                 "Loan schedule remove request invalid");
                     }
+                    if (termVariations.fetchTermApplicaDate().isEqual(lastDate)) {
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.delete.not.allowed.for.last.period.date", "Loan schedule remove request invalid");
+                    }
                 break;
                 case DUE_DATE:
                     dueDates.remove(termVariations.fetchTermApplicaDate());
                     dueDates.add(termVariations.fetchDateValue());
+                    if (termVariations.fetchTermApplicaDate().isEqual(lastDate)) {
+                        lastDate = termVariations.fetchDateValue();
+                    }
                 break;
                 case PRINCIPAL_AMOUNT:
                 case EMI_AMOUNT:
@@ -627,6 +653,10 @@ public class LoanScheduleAssembler {
                     if (!dueDates.contains(termVariations.fetchTermApplicaDate())) {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
                                 "variable.schedule.amount.update.from.date.invalid", "Loan schedule modify request invalid");
+                    }
+                    if (termVariations.fetchTermApplicaDate().isEqual(lastDate)) {
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.amount.update.not.allowed.for.last.period", "Loan schedule modify request invalid");
                     }
                 break;
 
@@ -669,7 +699,8 @@ public class LoanScheduleAssembler {
         loan.regenerateRepaymentSchedule(scheduleGeneratorDTO, currentUser);
     }
 
-    private List<LoanTermVariations> adjustExistingVariations(List<LoanTermVariations> variations, List<LoanTermVariations> newVariations) {
+    private List<LoanTermVariations> adjustExistingVariations(List<LoanTermVariations> variations, List<LoanTermVariations> newVariations,
+            final Map<LocalDate, LocalDate> adjustDueDateVariations) {
         Map<LocalDate, LoanTermVariations> amountVariations = new HashMap<>();
         Map<LocalDate, LoanTermVariations> dueDateVariations = new HashMap<>();
         Map<LocalDate, LoanTermVariations> insertVariations = new HashMap<>();
@@ -685,54 +716,64 @@ public class LoanScheduleAssembler {
                 case INSERT_INSTALLMENT:
                     insertVariations.put(loanTermVariations.fetchTermApplicaDate(), loanTermVariations);
                 break;
+                case DELETE_INSTALLMENT:
+                    adjustDueDateVariations.put(loanTermVariations.fetchTermApplicaDate(), null);
+                break;
                 default:
                 break;
             }
         }
         List<LoanTermVariations> retainVariations = new ArrayList<>();
         for (LoanTermVariations loanTermVariations : newVariations) {
+            boolean retain = true;
             switch (loanTermVariations.getTermType()) {
                 case DUE_DATE:
                     if (amountVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         amountVariations.get(loanTermVariations.fetchTermApplicaDate()).setTermApplicableFrom(
                                 loanTermVariations.getDateValue());
-                        retainVariations.add(loanTermVariations);
                     } else if (insertVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         insertVariations.get(loanTermVariations.fetchTermApplicaDate()).setTermApplicableFrom(
                                 loanTermVariations.getDateValue());
+                        retain = false;
                     }
                     if (dueDateVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         LoanTermVariations existingVariation = dueDateVariations.get(loanTermVariations.fetchTermApplicaDate());
                         if (existingVariation.fetchTermApplicaDate().isEqual(loanTermVariations.fetchDateValue())) {
                             variations.remove(existingVariation);
+                            adjustDueDateVariations.put(existingVariation.fetchTermApplicaDate(), existingVariation.fetchDateValue());
                         } else {
                             existingVariation.setTermApplicableFrom(loanTermVariations.getDateValue());
                         }
+                        retain = false;
                     }
                 break;
                 case EMI_AMOUNT:
                 case PRINCIPAL_AMOUNT:
                     if (amountVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         amountVariations.get(loanTermVariations.fetchTermApplicaDate()).setDecimalValue(loanTermVariations.getTermValue());
+                        retain = false;
                     } else if (insertVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         insertVariations.get(loanTermVariations.fetchTermApplicaDate()).setDecimalValue(loanTermVariations.getTermValue());
+                        retain = false;
                     }
                 break;
                 case DELETE_INSTALLMENT:
                     if (amountVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         variations.remove(amountVariations.get(loanTermVariations.fetchTermApplicaDate()));
-                        retainVariations.add(loanTermVariations);
+
                     } else if (insertVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         variations.remove(insertVariations.get(loanTermVariations.fetchTermApplicaDate()));
+                        retain = false;
                     }
                     if (dueDateVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
                         variations.remove(amountVariations.get(loanTermVariations.fetchTermApplicaDate()));
-                        retainVariations.add(loanTermVariations);
                     }
                 break;
                 default:
-                    retainVariations.add(loanTermVariations);
                 break;
+            }
+            if (retain) {
+                retainVariations.add(loanTermVariations);
             }
         }
         return retainVariations;
@@ -809,9 +850,12 @@ public class LoanScheduleAssembler {
                     loanTermVariations.add(data);
                 }
                 if (decimalValue != null) {
+                    if (modifiedDuedate == null) {
+                        modifiedDuedate = dueDate;
+                    }
                     Date date = null;
-                    LoanTermVariations data = new LoanTermVariations(decimalValueVariationType.getValue(), dueDate, decimalValue, date,
-                            isSpecificToInstallment, loan);
+                    LoanTermVariations data = new LoanTermVariations(decimalValueVariationType.getValue(), modifiedDuedate, decimalValue,
+                            date, isSpecificToInstallment, loan);
                     loanTermVariations.add(data);
                 }
             }
