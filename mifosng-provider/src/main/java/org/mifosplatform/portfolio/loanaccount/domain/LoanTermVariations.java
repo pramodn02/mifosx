@@ -95,4 +95,14 @@ public class LoanTermVariations extends AbstractPersistable<Long> {
         return this.dateValue == null ? null : new LocalDate(this.dateValue);
     }
 
+    
+    public void setTermApplicableFrom(Date termApplicableFrom) {
+        this.termApplicableFrom = termApplicableFrom;
+    }
+
+    
+    public void setDecimalValue(BigDecimal decimalValue) {
+        this.decimalValue = decimalValue;
+    }
+
 }

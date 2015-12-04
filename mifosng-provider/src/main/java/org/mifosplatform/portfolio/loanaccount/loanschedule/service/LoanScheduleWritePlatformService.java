@@ -10,5 +10,7 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 
 public interface LoanScheduleWritePlatformService {
 
-    public CommandProcessingResult modifyLoanSchedule(final Long loanId, final JsonCommand command);
+    public CommandProcessingResult addLoanScheduleVariations(final Long loanId, final JsonCommand command);
+
+    CommandProcessingResult deleteLoanScheduleVariations(final Long loanId);
 }

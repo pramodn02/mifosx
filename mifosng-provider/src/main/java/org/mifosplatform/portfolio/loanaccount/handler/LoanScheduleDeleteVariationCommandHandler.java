@@ -14,19 +14,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-@CommandType(entity = "LOAN", action = "CREATESCHEDULEEXCEPTIONS")
-public class LoanScheduleExceptionCommandHandler implements NewCommandSourceHandler {
+@CommandType(entity = "LOAN", action = "DELETESCHEDULEEXCEPTIONS")
+public class LoanScheduleDeleteVariationCommandHandler implements NewCommandSourceHandler {
 
     private final LoanScheduleWritePlatformService loanScheduleWritePlatformService;
 
     @Autowired
-    public LoanScheduleExceptionCommandHandler(final LoanScheduleWritePlatformService loanScheduleWritePlatformService) {
+    public LoanScheduleDeleteVariationCommandHandler(final LoanScheduleWritePlatformService loanScheduleWritePlatformService) {
         this.loanScheduleWritePlatformService = loanScheduleWritePlatformService;
     }
 
     @Override
     public CommandProcessingResult processCommand(JsonCommand command) {
-        return this.loanScheduleWritePlatformService.modifyLoanSchedule(command.getLoanId(), command);
+        return this.loanScheduleWritePlatformService.deleteLoanScheduleVariations(command.getLoanId());
     }
 
 }

@@ -2553,4 +2553,13 @@ public class CommandWrapperBuilder {
         this.href = "/loans/" + loanId + "/schedule";
         return this;
     }
+
+    public CommandWrapperBuilder deleteScheduleExceptions(final Long loanId) {
+        this.actionName = "DELETESCHEDULEEXCEPTIONS";
+        this.entityName = "LOAN";
+        this.entityId = loanId;
+        this.loanId = loanId;
+        this.href = "/loans/" + loanId + "/schedule";
+        return this;
+    }
 }

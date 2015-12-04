@@ -11,8 +11,10 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -559,7 +561,14 @@ public class LoanScheduleAssembler {
         this.variableLoanScheduleFromApiJsonValidator.validateSchedule(json, loan);
 
         List<LoanTermVariations> variations = loan.getLoanTermVariations();
-        extractLoanTermVariations(loan, json, variations);
+        List<LoanTermVariations> newVariations = new ArrayList<>();
+        extractLoanTermVariations(loan, json, newVariations);
+
+        if (!newVariations.isEmpty()) {
+            List<LoanTermVariations> retainVariations = adjustExistingVariations(variations, newVariations);
+            newVariations = retainVariations;
+        }
+        variations.addAll(newVariations);
 
         /*
          * List<LoanTermVariationsData> loanTermVariationsDatas = new
@@ -575,7 +584,7 @@ public class LoanScheduleAssembler {
         Set<LocalDate> dueDates = new TreeSet<>();
         LocalDate graceApplicable = loan.getExpectedDisbursedOnLocalDate();
         Integer graceOnPrincipal = loan.getLoanProductRelatedDetail().graceOnPrincipalPayment();
-        if(graceOnPrincipal == null){
+        if (graceOnPrincipal == null) {
             graceOnPrincipal = 0;
         }
         for (LoanRepaymentScheduleInstallment installment : installments) {
@@ -615,7 +624,7 @@ public class LoanScheduleAssembler {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
                                 "variable.schedule.amount.update.not.allowed.before.grace.period", "Loan schedule modify request invalid");
                     }
-                    if(!dueDates.contains(termVariations.fetchTermApplicaDate())){
+                    if (!dueDates.contains(termVariations.fetchTermApplicaDate())) {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
                                 "variable.schedule.amount.update.from.date.invalid", "Loan schedule modify request invalid");
                     }
@@ -658,6 +667,75 @@ public class LoanScheduleAssembler {
         ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan);
         AppUser currentUser = this.context.getAuthenticatedUserIfPresent();
         loan.regenerateRepaymentSchedule(scheduleGeneratorDTO, currentUser);
+    }
+
+    private List<LoanTermVariations> adjustExistingVariations(List<LoanTermVariations> variations, List<LoanTermVariations> newVariations) {
+        Map<LocalDate, LoanTermVariations> amountVariations = new HashMap<>();
+        Map<LocalDate, LoanTermVariations> dueDateVariations = new HashMap<>();
+        Map<LocalDate, LoanTermVariations> insertVariations = new HashMap<>();
+        for (LoanTermVariations loanTermVariations : variations) {
+            switch (loanTermVariations.getTermType()) {
+                case EMI_AMOUNT:
+                case PRINCIPAL_AMOUNT:
+                    amountVariations.put(loanTermVariations.fetchTermApplicaDate(), loanTermVariations);
+                break;
+                case DUE_DATE:
+                    dueDateVariations.put(loanTermVariations.fetchDateValue(), loanTermVariations);
+                break;
+                case INSERT_INSTALLMENT:
+                    insertVariations.put(loanTermVariations.fetchTermApplicaDate(), loanTermVariations);
+                break;
+                default:
+                break;
+            }
+        }
+        List<LoanTermVariations> retainVariations = new ArrayList<>();
+        for (LoanTermVariations loanTermVariations : newVariations) {
+            switch (loanTermVariations.getTermType()) {
+                case DUE_DATE:
+                    if (amountVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        amountVariations.get(loanTermVariations.fetchTermApplicaDate()).setTermApplicableFrom(
+                                loanTermVariations.getDateValue());
+                        retainVariations.add(loanTermVariations);
+                    } else if (insertVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        insertVariations.get(loanTermVariations.fetchTermApplicaDate()).setTermApplicableFrom(
+                                loanTermVariations.getDateValue());
+                    }
+                    if (dueDateVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        LoanTermVariations existingVariation = dueDateVariations.get(loanTermVariations.fetchTermApplicaDate());
+                        if (existingVariation.fetchTermApplicaDate().isEqual(loanTermVariations.fetchDateValue())) {
+                            variations.remove(existingVariation);
+                        } else {
+                            existingVariation.setTermApplicableFrom(loanTermVariations.getDateValue());
+                        }
+                    }
+                break;
+                case EMI_AMOUNT:
+                case PRINCIPAL_AMOUNT:
+                    if (amountVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        amountVariations.get(loanTermVariations.fetchTermApplicaDate()).setDecimalValue(loanTermVariations.getTermValue());
+                    } else if (insertVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        insertVariations.get(loanTermVariations.fetchTermApplicaDate()).setDecimalValue(loanTermVariations.getTermValue());
+                    }
+                break;
+                case DELETE_INSTALLMENT:
+                    if (amountVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        variations.remove(amountVariations.get(loanTermVariations.fetchTermApplicaDate()));
+                        retainVariations.add(loanTermVariations);
+                    } else if (insertVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        variations.remove(insertVariations.get(loanTermVariations.fetchTermApplicaDate()));
+                    }
+                    if (dueDateVariations.containsKey(loanTermVariations.fetchTermApplicaDate())) {
+                        variations.remove(amountVariations.get(loanTermVariations.fetchTermApplicaDate()));
+                        retainVariations.add(loanTermVariations);
+                    }
+                break;
+                default:
+                    retainVariations.add(loanTermVariations);
+                break;
+            }
+        }
+        return retainVariations;
     }
 
     private void extractLoanTermVariations(final Loan loan, final String json, final List<LoanTermVariations> loanTermVariations) {

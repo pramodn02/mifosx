@@ -63,6 +63,12 @@ public class VariableLoanScheduleFromApiJsonValidator {
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
 
+        if (!loan.isSubmittedAndPendingApproval()) {
+            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("account.is.not.submitted.and.pending.state",
+                    "Loan is not in submited state");
+            throw new PlatformApiDataValidationException(dataValidationErrors);
+        }
+
         final JsonElement element = this.fromApiJsonHelper.parse(json);
         if (loan.loanProduct().allowVariabeInstallments()) {
             if (element.isJsonObject() && this.fromApiJsonHelper.parameterExists(LoanApiConstants.exceptionParamName, element)) {

@@ -58,11 +58,13 @@ public class LoanScheduleApiResource {
     }
 
     @POST
+    @Path("exceptions")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
     public String calculateLoanScheduleOrSubmitVariableSchedule(@PathParam("loanId") final Long loanId,
             @QueryParam("command") final String commandParam, @Context final UriInfo uriInfo, final String apiRequestBodyAsJson) {
 
+        CommandWrapper commandRequest = null;
         if (is(commandParam, "calculateLoanSchedule")) {
             this.context.authenticatedUser().validateHasReadPermission(this.resourceNameForPermissions);
             final LoanScheduleData loanSchedule = this.calculationPlatformService.generateLoanScheduleForVariableInstallmentRequest(loanId,
@@ -70,9 +72,11 @@ public class LoanScheduleApiResource {
 
             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());
             return this.toApiJsonSerializer.serialize(settings, loanSchedule, new HashSet<String>());
+        } else if (is(commandParam, "addVariations ")) {
+            commandRequest = new CommandWrapperBuilder().createScheduleExceptions(loanId).withJson(apiRequestBodyAsJson).build();
+        } else if (is(commandParam, "deleteVariations")) {
+            commandRequest = new CommandWrapperBuilder().deleteScheduleExceptions(loanId).build();
         }
-
-        final CommandWrapper commandRequest = new CommandWrapperBuilder().createScheduleExceptions(loanId).withJson(apiRequestBodyAsJson).build();
 
         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
 
