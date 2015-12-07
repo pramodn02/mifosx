@@ -10,6 +10,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +75,7 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanDisbursementDetails;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariationType;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariations;
+import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariationsComparator;
 import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
 import org.mifosplatform.portfolio.loanaccount.domain.transactionprocessor.LoanRepaymentScheduleTransactionProcessor;
 import org.mifosplatform.portfolio.loanaccount.exception.LoanApplicationDateException;
@@ -571,6 +573,7 @@ public class LoanScheduleAssembler {
             newVariations = retainVariations;
         }
         variations.addAll(newVariations);
+        Collections.sort(variations, new LoanTermVariationsComparator());
 
         /*
          * List<LoanTermVariationsData> loanTermVariationsDatas = new
@@ -638,7 +641,12 @@ public class LoanScheduleAssembler {
                     }
                 break;
                 case DUE_DATE:
-                    dueDates.remove(termVariations.fetchTermApplicaDate());
+                    if (dueDates.contains(termVariations.fetchTermApplicaDate())) {
+                        dueDates.remove(termVariations.fetchTermApplicaDate());
+                    } else {
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("variable.schedule.modify.date.invalid",
+                                "Loan schedule modify due date request invalid");
+                    }
                     dueDates.add(termVariations.fetchDateValue());
                     if (termVariations.fetchTermApplicaDate().isEqual(lastDate)) {
                         lastDate = termVariations.fetchDateValue();
@@ -712,6 +720,7 @@ public class LoanScheduleAssembler {
                 break;
                 case DUE_DATE:
                     dueDateVariations.put(loanTermVariations.fetchDateValue(), loanTermVariations);
+                    adjustDueDateVariations.put(loanTermVariations.fetchTermApplicaDate(), loanTermVariations.fetchDateValue());
                 break;
                 case INSERT_INSTALLMENT:
                     insertVariations.put(loanTermVariations.fetchTermApplicaDate(), loanTermVariations);
@@ -740,7 +749,6 @@ public class LoanScheduleAssembler {
                         LoanTermVariations existingVariation = dueDateVariations.get(loanTermVariations.fetchTermApplicaDate());
                         if (existingVariation.fetchTermApplicaDate().isEqual(loanTermVariations.fetchDateValue())) {
                             variations.remove(existingVariation);
-                            adjustDueDateVariations.put(existingVariation.fetchTermApplicaDate(), existingVariation.fetchDateValue());
                         } else {
                             existingVariation.setTermApplicableFrom(loanTermVariations.getDateValue());
                         }

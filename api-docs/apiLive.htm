@@ -11530,6 +11530,58 @@ Request Body:
 				</div>
 			</div>
 
+
+<!-- start Loan term variations -->
+			<a id="loans_calculate_with_exceptions" name="loans_calculate_with_exceptions" class="old-syle-anchor">&nbsp;</a>
+			<div class="method-section">
+				<div class="method-description">
+					<h4>Calculate loan repayment schedule based on Loan term variations</h4>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
+						</tr>
+						<tr class=alt>
+							<td>exceptions,locale,dateFormat</td>
+						</tr>
+					</table>
+				</div>
+				<div class="method-example">
+					<code class="method-declaration">
+POST https://DomainName/api/v1/loans/1/schedule?command=calculateLoanSchedule
+					</code>
+					<code class="method-request">
+POST loans/{loanIdd}/schedule?command=calculateLoanSchedule
+Content-Type: application/json
+Request Body:
+{
+	"locale": "en",
+	"dateFormat": "dd MMMM yyyy",
+	"exceptions": {
+		"modifiedinstallments": [{
+			"dueDate": '01 April 2016',
+			"modifiedDueDate": '05 April 2016'
+		},
+		{
+			"dueDate": '05 January 2016',
+			"modifiedDueDate": '01 January 2016'
+		}],
+		"deletedinstallments": [{
+			"dueDate": "01 October 2016"
+		}],
+		newinstallments: [{
+			dueDate: '10 October 2016',
+			installmentAmount: '1000'
+}]
+	}
+}
+					</code>
+					<code class="method-response">
+
+					</code>
+				</div>
+			</div>			
+			
+			
 <!-- start of offices content -->
 			<a id="offices" name="offices" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">

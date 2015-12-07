@@ -48,21 +48,27 @@ public class LoanScheduleWritePlatformServiceImpl implements LoanScheduleWritePl
     @Override
     public CommandProcessingResult addLoanScheduleVariations(final Long loanId, final JsonCommand command) {
         final Loan loan = this.loanAssembler.assembleFrom(loanId);
-        this.loanScheduleAssembler.assempleVariableScheduleFrom(loan, command.json());
-        List<LoanTermVariations> loanTermVariations = loan.getLoanTermVariations();
-        List<LoanTermVariations> newVariations = new ArrayList<>();
-        for (LoanTermVariations termVariations : loanTermVariations) {
-            if (termVariations.getId() == null) {
-                newVariations.add(termVariations);
-            }
+        Map<Long, LoanTermVariations> loanTermVariations = new HashMap<>();
+        for (LoanTermVariations termVariations : loan.getLoanTermVariations()) {
+            loanTermVariations.put(termVariations.getId(), termVariations);
         }
+        this.loanScheduleAssembler.assempleVariableScheduleFrom(loan, command.json());
+
         this.loanAccountDomainService.saveLoanWithDataIntegrityViolationChecks(loan);
         final Map<String, Object> changes = new HashMap<>();
-        List<LoanTermVariationsData> data = new ArrayList<>();
-        for (LoanTermVariations termVariations : newVariations) {
-            data.add(termVariations.toData());
+        List<LoanTermVariationsData> newVariationsData = new ArrayList<>();
+        List<LoanTermVariations> modifiedVariations = loan.getLoanTermVariations();
+        for (LoanTermVariations termVariations : modifiedVariations) {
+            if (loanTermVariations.containsKey(termVariations.getId())) {
+                loanTermVariations.remove(termVariations.getId());
+            } else {
+                newVariationsData.add(termVariations.toData());
+            }
         }
-        changes.put("loanTermVariations", data);
+        if (!loanTermVariations.isEmpty()) {
+            changes.put("removedVariations", loanTermVariations.keySet());
+        }
+        changes.put("loanTermVariations", newVariationsData);
         return new CommandProcessingResultBuilder() //
                 .withCommandId(command.commandId()) //
                 .withLoanId(loanId) //
