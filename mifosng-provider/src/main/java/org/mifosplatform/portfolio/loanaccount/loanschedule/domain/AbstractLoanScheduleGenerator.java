@@ -284,8 +284,13 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                         actualRepaymentDate = previousRepaymentDate;
                         scheduledDueDate = loanTermVariationsData.getTermApplicableFrom();
                         loanApplicationTerms.setNumberOfRepayments(loanApplicationTerms.getNumberOfRepayments() + 1);
-                        adjustInstallmentOrPrincipalAmount(loanApplicationTerms, totalCumulativePrincipal, periodNumber, mc,
-                                holidayDetailDTO);
+                        if (loanTermVariationsData.getDecimalValue() == null) {
+                            adjustInstallmentOrPrincipalAmount(loanApplicationTerms, totalCumulativePrincipal, periodNumber, mc,
+                                    holidayDetailDTO);
+                        } else {
+                            loanApplicationTerms.setCurrentPeriodFixedEmiAmount(loanTermVariationsData.getDecimalValue());
+                            recalculateAmounts = true;
+                        }
                         loanTermVariationsData.setProcessed(true);
                     break;
                     case DELETE_INSTALLMENT:
