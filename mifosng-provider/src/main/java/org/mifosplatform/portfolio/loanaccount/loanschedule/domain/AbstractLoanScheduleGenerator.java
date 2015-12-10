@@ -282,8 +282,8 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     break;
                     case INSERT_INSTALLMENT:
                         actualRepaymentDate = previousRepaymentDate;
-                        scheduledDueDate = loanTermVariationsData.getDateValue();
-                        loanApplicationTerms.setNumberOfRepayments(loanApplicationTerms.getNumberOfRepayments() - 1);
+                        scheduledDueDate = loanTermVariationsData.getTermApplicableFrom();
+                        loanApplicationTerms.setNumberOfRepayments(loanApplicationTerms.getNumberOfRepayments() + 1);
                         adjustInstallmentOrPrincipalAmount(loanApplicationTerms, totalCumulativePrincipal, periodNumber, mc,
                                 holidayDetailDTO);
                         loanTermVariationsData.setProcessed(true);
