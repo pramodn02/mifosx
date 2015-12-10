@@ -579,10 +579,10 @@ public class Loan extends AbstractPersistable<Long> {
         } else {
             chargeAmt = loanCharge.amount();
             if (loanCharge.isInstalmentFee()) {
-                chargeAmt = chargeAmt.divide(BigDecimal.valueOf(repaymentScheduleDetail().getNumberOfRepayments()));
+                chargeAmt = chargeAmt.divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
             }
         }
-        loanCharge.update(chargeAmt, loanCharge.getDueLocalDate(), amount, repaymentScheduleDetail().getNumberOfRepayments(),
+        loanCharge.update(chargeAmt, loanCharge.getDueLocalDate(), amount, fetchNumberOfInstallmensAfterExceptions(),
                 totalChargeAmt);
 
         // NOTE: must add new loan charge to set of loan charges before
@@ -1089,7 +1089,7 @@ public class Loan extends AbstractPersistable<Long> {
             } else {
                 chargeAmt = loanCharge.amount();
                 if (loanCharge.isInstalmentFee()) {
-                    chargeAmt = chargeAmt.divide(BigDecimal.valueOf(repaymentScheduleDetail().getNumberOfRepayments()));
+                    chargeAmt = chargeAmt.divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
                 }
             }
             if (charge != null)
@@ -1605,7 +1605,7 @@ public class Loan extends AbstractPersistable<Long> {
         } else {
             chargeAmt = loanCharge.amount();
             if (loanCharge.isInstalmentFee()) {
-                chargeAmt = chargeAmt.divide(BigDecimal.valueOf(repaymentScheduleDetail().getNumberOfRepayments()));
+                chargeAmt = chargeAmt.divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
             }
         }
         if (loanCharge.isActive()) {
@@ -2811,8 +2811,13 @@ public class Loan extends AbstractPersistable<Long> {
         for (final LoanRepaymentScheduleInstallment currentInstallment : this.repaymentScheduleInstallments) {
             currentInstallment.resetDerivedComponents();
         }
-
-        this.loanTermVariations.clear();
+        final List<LoanTermVariations> removeTerms = new ArrayList<>(this.loanTermVariations.size());
+        for (LoanTermVariations variations : this.loanTermVariations) {
+            if (variations.getOnLoanStatus() == LoanStatus.ACTIVE.getValue()) {
+                removeTerms.add(variations);
+            }
+        }
+        this.loanTermVariations.removeAll(removeTerms);
         final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
         wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges());
 
@@ -4598,7 +4603,7 @@ public class Loan extends AbstractPersistable<Long> {
             for (final LoanRepaymentScheduleInstallment installment : this.repaymentScheduleInstallments) {
                 BigDecimal amount = BigDecimal.ZERO;
                 if (loanCharge.getChargeCalculation().isFlat()) {
-                    amount = loanCharge.amount().divide(BigDecimal.valueOf(repaymentScheduleDetail().getNumberOfRepayments()));
+                    amount = loanCharge.amount().divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
                 } else {
                     amount = calculateInstallmentChargeAmount(loanCharge.getChargeCalculation(), loanCharge.getPercentage(), installment)
                             .getAmount();
@@ -5563,6 +5568,22 @@ public class Loan extends AbstractPersistable<Long> {
 
     public List<LoanTermVariations> getLoanTermVariations() {
         return this.loanTermVariations;
+    }
+
+    private int adjustNumberOfRepayments() {
+        int repaymetsForAdjust = 0;
+        for (LoanTermVariations loanTermVariations : this.loanTermVariations) {
+            if (loanTermVariations.getTermType().isInsertInstallment()) {
+                repaymetsForAdjust++;
+            } else if (loanTermVariations.getTermType().isDeleteInstallment()) {
+                repaymetsForAdjust--;
+            }
+        }
+        return repaymetsForAdjust;
+    }
+
+    public int fetchNumberOfInstallmensAfterExceptions() {
+        return this.repaymentScheduleDetail().getNumberOfRepayments() + adjustNumberOfRepayments();
     }
 
 }

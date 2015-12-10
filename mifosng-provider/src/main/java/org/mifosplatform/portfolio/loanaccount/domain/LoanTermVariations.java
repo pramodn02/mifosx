@@ -47,14 +47,18 @@ public class LoanTermVariations extends AbstractPersistable<Long> {
     @Column(name = "is_specific_to_installment", nullable = false)
     private boolean isSpecificToInstallment;
 
-    public LoanTermVariations(final Integer termType, final Date termApplicableFrom, final BigDecimal decimalValue, Date dateValue,
-            boolean isSpecificToInstallment, final Loan loan) {
+    @Column(name = "applied_on_loan_status", nullable = false)
+    private Integer onLoanStatus;
+
+    public LoanTermVariations(final Integer termType, final Date termApplicableFrom, final BigDecimal decimalValue, final Date dateValue,
+            final boolean isSpecificToInstallment, final Loan loan) {
         this.loan = loan;
         this.termApplicableFrom = termApplicableFrom;
         this.termType = termType;
         this.decimalValue = decimalValue;
         this.dateValue = dateValue;
         this.isSpecificToInstallment = isSpecificToInstallment;
+        this.onLoanStatus = loan.status().getValue();
     }
 
     protected LoanTermVariations() {
@@ -95,14 +99,17 @@ public class LoanTermVariations extends AbstractPersistable<Long> {
         return this.dateValue == null ? null : new LocalDate(this.dateValue);
     }
 
-    
     public void setTermApplicableFrom(Date termApplicableFrom) {
         this.termApplicableFrom = termApplicableFrom;
     }
 
-    
     public void setDecimalValue(BigDecimal decimalValue) {
         this.decimalValue = decimalValue;
+    }
+
+    
+    public Integer getOnLoanStatus() {
+        return this.onLoanStatus;
     }
 
 }
