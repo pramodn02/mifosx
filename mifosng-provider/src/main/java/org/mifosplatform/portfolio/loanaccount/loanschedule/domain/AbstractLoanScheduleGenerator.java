@@ -253,7 +253,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
             isFirstRepayment = false;
         }
-
+        LocalDate priviousScheduledDueDate = actualRepaymentDate;
         while (!outstandingBalance.isZero() || !disburseDetailMap.isEmpty()) {
             LocalDate previousRepaymentDate = actualRepaymentDate;
             actualRepaymentDate = this.scheduledDateGenerator.generateNextRepaymentDate(actualRepaymentDate, loanApplicationTerms,
@@ -262,6 +262,12 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             LocalDate scheduledDueDate = this.scheduledDateGenerator.adjustRepaymentDate(actualRepaymentDate, loanApplicationTerms,
                     holidayDetailDTO);
 
+            // calculated interest start date for the period
+            periodStartDateApplicableForInterest = calculateInterestStartDateForPeriod(loanApplicationTerms, periodStartDate,
+                    idealDisbursementDate, periodStartDateApplicableForInterest);
+            final int daysInPeriodApplicableForInterest = Days.daysBetween(priviousScheduledDueDate, scheduledDueDate).getDays();
+            LocalDate scheduleDateForReversal = priviousScheduledDueDate;
+            priviousScheduledDueDate = scheduledDueDate;
             // Exceptions That need to be applied for Loan Account
             boolean skipPeriod = false;
             boolean recalculateAmounts = false;
@@ -282,6 +288,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     break;
                     case INSERT_INSTALLMENT:
                         actualRepaymentDate = previousRepaymentDate;
+                        priviousScheduledDueDate = scheduleDateForReversal;
                         scheduledDueDate = loanTermVariationsData.getTermApplicableFrom();
                         loanApplicationTerms.setNumberOfRepayments(loanApplicationTerms.getNumberOfRepayments() + 1);
                         if (loanTermVariationsData.getDecimalValue() == null) {
@@ -339,11 +346,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
             if (extendTermForDailyRepayments) {
                 actualRepaymentDate = scheduledDueDate;
             }
-
-            // calculated interest start date for the period
-            periodStartDateApplicableForInterest = calculateInterestStartDateForPeriod(loanApplicationTerms, periodStartDate,
-                    idealDisbursementDate, periodStartDateApplicableForInterest);
-            int daysInPeriodApplicableForInterest = Days.daysBetween(periodStartDateApplicableForInterest, scheduledDueDate).getDays();
 
             if (scheduleTillDate != null && !scheduledDueDate.isBefore(scheduleTillDate)) {
                 scheduledDueDate = scheduleTillDate;
