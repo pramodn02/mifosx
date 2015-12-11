@@ -80,7 +80,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
         Money principalToBeScheduled = getPrincipalToBeScheduled(loanApplicationTerms);
         final MonetaryCurrency currency = principalToBeScheduled.getCurrency();
-        final int numberOfRepayments = loanApplicationTerms.getNumberOfRepayments();
+        final int numberOfRepayments = loanApplicationTerms.fetchNumberOfRepaymentsAfterExceptions();
 
         final LocalDate scheduleTillDate = loanScheduleRecalculationDTO == null ? null : loanScheduleRecalculationDTO.getScheduleTillDate();
         final Collection<RecalculationDetail> transactions = loanScheduleRecalculationDTO == null ? null : loanScheduleRecalculationDTO
@@ -1362,9 +1362,11 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                     updateMapWithAmount(compoundingMap, Money.zero(currency), compoundingDate);
                 } else {
                     Money feeChargesForInstallment = cumulativeFeeChargesDueWithin(lastCompoundingDate, compoundingDate, charges, currency,
-                            null, loanApplicationTerms.getPrincipal(), null, loanApplicationTerms.getNumberOfRepayments(), false);
+                            null, loanApplicationTerms.getPrincipal(), null, loanApplicationTerms.fetchNumberOfRepaymentsAfterExceptions(),
+                            false);
                     Money penaltyChargesForInstallment = cumulativePenaltyChargesDueWithin(lastCompoundingDate, compoundingDate, charges,
-                            currency, null, loanApplicationTerms.getPrincipal(), null, loanApplicationTerms.getNumberOfRepayments(), false);
+                            currency, null, loanApplicationTerms.getPrincipal(), null,
+                            loanApplicationTerms.fetchNumberOfRepaymentsAfterExceptions(), false);
                     updateMapWithAmount(compoundingMap, feeChargesForInstallment.plus(penaltyChargesForInstallment), compoundingDate);
                 }
                 lastCompoundingDate = compoundingDate;
@@ -2381,7 +2383,7 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
         LoanScheduleModel loanScheduleModel = generate(mc, loanApplicationTerms, charges, holidayDetailDTO, loanScheduleRecalculationDTO);
         List<LoanRepaymentScheduleInstallment> installments = fetchInstallmentsFromScheduleModel(loanScheduleModel);
         loanRepaymentScheduleTransactionProcessor.handleTransaction(loanApplicationTerms.getExpectedDisbursementDate(), loanTransactions,
-                currency, installments, charges);
+                currency, installments, charges, loanApplicationTerms.fetchNumberOfRepaymentsAfterExceptions());
         Money feeCharges = Money.zero(currency);
         Money penaltyCharges = Money.zero(currency);
         Money totalPrincipal = Money.zero(currency);

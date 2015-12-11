@@ -701,7 +701,9 @@ public class LoanScheduleAssembler {
             }
         }
         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException(dataValidationErrors); }
-
+        if (loan.getExpectedFirstRepaymentOnDate() == null) {
+            loan.setExpectedFirstRepaymentOnDate(loan.fetchRepaymentScheduleInstallment(1).getDueDate().toDate());
+        }
         ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan);
         AppUser currentUser = this.context.getAuthenticatedUserIfPresent();
         loan.regenerateRepaymentSchedule(scheduleGeneratorDTO, currentUser);

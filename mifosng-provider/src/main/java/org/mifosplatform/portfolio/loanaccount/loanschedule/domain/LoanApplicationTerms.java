@@ -46,6 +46,7 @@ public final class LoanApplicationTerms {
     private Integer loanTermFrequency;
     private final PeriodFrequencyType loanTermPeriodFrequencyType;
     private Integer numberOfRepayments;
+    private Integer actualNumberOfRepayments;
     private final Integer repaymentEvery;
     private final PeriodFrequencyType repaymentPeriodFrequencyType;
     private final Integer nthDay;
@@ -350,6 +351,7 @@ public final class LoanApplicationTerms {
         this.loanTermFrequency = loanTermFrequency;
         this.loanTermPeriodFrequencyType = loanTermPeriodFrequencyType;
         this.numberOfRepayments = numberOfRepayments;
+        this.actualNumberOfRepayments = numberOfRepayments;
         this.repaymentEvery = repaymentEvery;
         this.repaymentPeriodFrequencyType = repaymentPeriodFrequencyType;
         this.nthDay = nthDay;
@@ -1291,6 +1293,10 @@ public final class LoanApplicationTerms {
 
     public void setNumberOfRepayments(Integer numberOfRepayments) {
         this.numberOfRepayments = numberOfRepayments;
+    }
+
+    public Integer fetchNumberOfRepaymentsAfterExceptions() {
+        return this.actualNumberOfRepayments + getLoanTermVariations().adjustNumberOfRepayments();
     }
 
 }
