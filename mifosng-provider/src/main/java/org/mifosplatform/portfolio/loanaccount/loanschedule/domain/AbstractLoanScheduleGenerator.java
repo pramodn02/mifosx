@@ -226,9 +226,6 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
                 LoanTermVariationsData variation = loanApplicationTerms.getLoanTermVariations().nextVariation();
                 if (!variation.isSpecificToInstallment()) {
                     switch (variation.getTermVariationType()) {
-                        case INTEREST_RATE:
-                            loanApplicationTerms.updateAnnualNominalInterestRate(variation.getDecimalValue());
-                        break;
                         case EMI_AMOUNT:
                             loanApplicationTerms.setFixedEmiAmount(variation.getDecimalValue());
                         break;

@@ -80,8 +80,8 @@ public class LoanProductData {
 
     // Variable Installments Settings
     private final boolean allowVariableInstallments;
-    private final Long minimumGap;
-    private final Long maximumGap;
+    private final Integer minimumGap;
+    private final Integer maximumGap;
 
     // settings
     private final EnumOptionData amortizationType;
@@ -191,8 +191,8 @@ public class LoanProductData {
         final BigDecimal maxDifferentialLendingRate = null;
         final boolean isFloatingInterestRateCalculationAllowed = false;
         final boolean isVariableInstallmentsAllowed = false;
-        final Long minimumGap = null;
-        final Long maximumGap = null;
+        final Integer minimumGap = null;
+        final Integer maximumGap = null;
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
         final EnumOptionData amortizationType = null;
@@ -275,8 +275,8 @@ public class LoanProductData {
         final BigDecimal maxDifferentialLendingRate = null;
         final boolean isFloatingInterestRateCalculationAllowed = false;
         final boolean isVariableInstallmentsAllowed = false;
-        final Long minimumGap = null;
-        final Long maximumGap = null;
+        final Integer minimumGap = null;
+        final Integer maximumGap = null;
         final EnumOptionData repaymentFrequencyType = null;
         final EnumOptionData interestRateFrequencyType = null;
         final EnumOptionData amortizationType = null;
@@ -365,8 +365,8 @@ public class LoanProductData {
         final BigDecimal maxDifferentialLendingRate = null;
         final boolean isFloatingInterestRateCalculationAllowed = false;
         final boolean isVariableInstallmentsAllowed = false;
-        final Long minimumGap = null;
-        final Long maximumGap = null;
+        final Integer minimumGap = null;
+        final Integer maximumGap = null;
         final EnumOptionData repaymentFrequencyType = LoanEnumerations.repaymentFrequencyType(PeriodFrequencyType.MONTHS);
         final EnumOptionData interestRateFrequencyType = LoanEnumerations.interestRateFrequencyType(PeriodFrequencyType.MONTHS);
         final EnumOptionData amortizationType = LoanEnumerations.amortizationType(AmortizationMethod.EQUAL_INSTALLMENTS);
@@ -466,7 +466,7 @@ public class LoanProductData {
             boolean isLinkedToFloatingInterestRates, Integer floatingRateId, String floatingRateName, BigDecimal interestRateDifferential,
             BigDecimal minDifferentialLendingRate, BigDecimal defaultDifferentialLendingRate, BigDecimal maxDifferentialLendingRate,
             boolean isFloatingInterestRateCalculationAllowed, final boolean isVariableInstallmentsAllowed,
-            final Long minimumGapBetweenInstallments, final Long maximumGapBetweenInstallments) {
+            final Integer minimumGapBetweenInstallments, final Integer maximumGapBetweenInstallments) {
         this.id = id;
         this.name = name;
         this.shortName = shortName;
@@ -991,4 +991,15 @@ public class LoanProductData {
         return this.isFloatingInterestRateCalculationAllowed;
     }
 
+    public boolean isVariableInstallmentsAllowed() {
+        return this.allowVariableInstallments;
+    }
+
+    public Integer getMinimumGapBetweenInstallments() {
+        return this.minimumGap;
+    }
+
+    public Integer getMaximumGapBetweenInstallments() {
+        return this.maximumGap;
+    }
 }

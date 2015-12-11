@@ -275,8 +275,8 @@ public class LoanProductReadPlatformServiceImpl implements LoanProductReadPlatfo
             final boolean isFloatingInterestRateCalculationAllowed = rs.getBoolean("isFloatingInterestRateCalculationAllowed");
 
             final boolean isVariableIntallmentsAllowed = rs.getBoolean("isVariableIntallmentsAllowed");
-            final Long minimumGap = rs.getLong("minimumGap");
-            final Long maximumGap = rs.getLong("maximumGap");
+            final Integer minimumGap = rs.getInt("minimumGap");
+            final Integer maximumGap = rs.getInt("maximumGap");
 
             final int repaymentFrequencyTypeId = JdbcSupport.getInteger(rs, "repaymentPeriodFrequency");
             final EnumOptionData repaymentFrequencyType = LoanEnumerations.repaymentFrequencyType(repaymentFrequencyTypeId);
