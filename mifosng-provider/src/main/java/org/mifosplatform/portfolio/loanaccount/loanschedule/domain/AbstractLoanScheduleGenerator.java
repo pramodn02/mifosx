@@ -42,6 +42,7 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleDTO
 import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleRecalculationDTO;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.exception.MultiDisbursementEmiAmountException;
 import org.mifosplatform.portfolio.loanaccount.loanschedule.exception.MultiDisbursementOutstandingAmoutException;
+import org.mifosplatform.portfolio.loanaccount.loanschedule.exception.ScheduleDateException;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleModel;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleModelRepaymentPeriod;
 import org.mifosplatform.portfolio.loanaccount.rescheduleloan.domain.LoanRescheduleRequest;
@@ -335,6 +336,10 @@ public abstract class AbstractLoanScheduleGenerator implements LoanScheduleGener
 
             if (skipPeriod) {
                 continue;
+            }
+            
+            if(periodStartDate.isAfter(scheduledDueDate)){
+                throw new ScheduleDateException("Due date can't be before period start date", scheduledDueDate);
             }
 
             if (!latePaymentMap.isEmpty()) {

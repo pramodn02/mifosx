@@ -1244,6 +1244,30 @@
 								<td></td>
 								<td></td>
 							</tr>
+							<tr>
+								<td><a href="#loan_term_variations">Loan Term Variations</a></td>
+								<td>/loans/{loanId}/schedule?command=calculateLoanSchedule</td>
+								<td><a href="#loans_calculate_with_exceptions">Calculate Schedule with Loan Term Variations</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>/loans/{loanId}/schedule?command=addVariations</td>
+								<td><a href="#loans_update_variations">Create Loan Term Variations</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>/loans/{loanId}/schedule?command=deleteVariations</td>
+								<td><a href="#loans_delete_variations">Remove All Loan Term Variations</a></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
 						</table>
 					</div>
 				</div>
@@ -11551,9 +11575,76 @@ Request Body:
 							<td>exceptions</td>
 						</tr>
 						<tr>
-							<td class=fielddesc>contains exception data for variations(modifiedinstallments,newinstallments and deletedinstallments) </td>
+							<td class=fielddesc>contains exception data for variations(modifiedinstallments,newinstallments and deletedinstallments described below) </td>
 						</tr>
 						
+					</table>
+					<p>Exception object fields</p>
+					<p>Modifiedinstallments Array fields</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Field Descriptions</div></td>
+						</tr>
+						<tr class=alt>
+							<td>dueDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Schedule dueDate for which this exception should be applied.</td>
+						</tr>
+						<tr class=alt>
+							<td>modifiedDueDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc> this is the exception data to move the due date to specified  date for a instalment</td>
+						</tr>
+						<tr class=alt>
+							<td>installmentAmount</td>
+						</tr>
+						<tr>
+							<td class=fielddesc> new instalment amount(principal+interest) for the specified instalment. supported only for interest method  declining  with equal instalments Amortization</td>
+						</tr>
+						<tr class=alt>
+							<td>principal</td>
+						</tr>
+						<tr>
+							<td class=fielddesc> new Principal amount for the specified instalment. supported only for interest method  declining  with equal instalments Amortization and for Flat loans.</td>
+						</tr>
+					</table>
+					<p>newinstallments Array fields</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Field Descriptions</div></td>
+						</tr>
+						<tr class=alt>
+							<td>dueDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Schedule dueDate for inserting new instalment.</td>
+						</tr>
+						<tr class=alt>
+							<td>installmentAmount</td>
+						</tr>
+						<tr>
+							<td class=fielddesc> new instalment amount(principal+interest) for the new instalment. supported only for interest method  declining  with equal instalments Amortization</td>
+						</tr>
+						<tr class=alt>
+							<td>principal</td>
+						</tr>
+						<tr>
+							<td class=fielddesc> new Principal amount for the new instalment. supported only for interest method  declining  with equal instalments Amortization and for Flat loans.</td>
+						</tr>
+					</table>
+					<p>deletedinstallments Array fields</p>
+					<table class=matrixHeading>
+						<tr class="matrixHeadingBG">
+							<td><div class="mifosXHeading2">Field Descriptions</div></td>
+						</tr>
+						<tr class=alt>
+							<td>dueDate</td>
+						</tr>
+						<tr>
+							<td class=fielddesc>Schedule dueDate for removing specific instalment.</td>
+						</tr>
 					</table>
 				</div>
 			</div>
@@ -11918,7 +12009,7 @@ Request Body:
 		<a id="loans_update_variations" name="loans_update_variations" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h4>updates loan repayment schedule based on Loan term variations</h4>
+					<h4>Updates loan repayment schedule based on Loan term variations</h4>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
@@ -12026,7 +12117,7 @@ Request Body:
 		<a id="loans_delete_variations" name="loans_delete_variations" class="old-syle-anchor">&nbsp;</a>
 			<div class="method-section">
 				<div class="method-description">
-					<h4>updates loan repayment schedule by removing Loan term variations</h4>
+					<h4>Updates loan repayment schedule by removing Loan term variations</h4>
 					<table class=matrixHeading>
 						<tr class="matrixHeadingBG">
 							<td><div class="mifosXHeading2">Mandatory Fields</div></td>
@@ -39367,6 +39458,14 @@ No Request Body
 					<td></td>
 					<td>/loans/{loanId}/schedule?command=addVariations</td>
 					<td><a href="#loans_update_variations">Create Loan Term Variations</a></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>/loans/{loanId}/schedule?command=deleteVariations</td>
+					<td><a href="#loans_delete_variations">Remove All Loan Term Variations</a></td>
 					<td></td>
 					<td></td>
 					<td></td>

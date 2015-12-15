@@ -614,11 +614,15 @@ public class LoanScheduleAssembler {
         Set<LocalDate> actualDueDates = new TreeSet<>(dueDates);
         final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
-
+        List<LocalDate> overlappings = new ArrayList<>();
         for (LoanTermVariations termVariations : variations) {
             switch (termVariations.getTermType()) {
                 case INSERT_INSTALLMENT:
-                    dueDates.add(termVariations.fetchTermApplicaDate());
+                    if (dueDates.contains(termVariations.fetchTermApplicaDate())) {
+                        overlappings.add(termVariations.fetchTermApplicaDate());
+                    } else {
+                        dueDates.add(termVariations.fetchTermApplicaDate());
+                    }
                     if (!graceApplicable.isBefore(termVariations.fetchTermApplicaDate())) {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
                                 "variable.schedule.insert.not.allowed.before.grace.period", "Loan schedule insert request invalid");
@@ -626,6 +630,9 @@ public class LoanScheduleAssembler {
                     if (termVariations.fetchTermApplicaDate().isAfter(lastDate)) {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
                                 "variable.schedule.insert.not.allowed.after.last.period.date", "Loan schedule insert request invalid");
+                    } else if(termVariations.fetchTermApplicaDate().isBefore(loan.getExpectedDisbursedOnLocalDate())){
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.insert.not.allowed.before.disbursement.date", "Loan schedule insert request invalid");
                     }
                 break;
                 case DELETE_INSTALLMENT:
@@ -642,12 +649,25 @@ public class LoanScheduleAssembler {
                 break;
                 case DUE_DATE:
                     if (dueDates.contains(termVariations.fetchTermApplicaDate())) {
-                        dueDates.remove(termVariations.fetchTermApplicaDate());
+
+                        if (overlappings.contains(termVariations.fetchTermApplicaDate())) {
+                            overlappings.remove(termVariations.fetchTermApplicaDate());
+                        } else {
+                            dueDates.remove(termVariations.fetchTermApplicaDate());
+                        }
                     } else {
                         baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("variable.schedule.modify.date.invalid",
                                 "Loan schedule modify due date request invalid");
                     }
-                    dueDates.add(termVariations.fetchDateValue());
+                    if (dueDates.contains(termVariations.fetchDateValue())) {
+                        overlappings.add(termVariations.fetchDateValue());
+                    } else {
+                        dueDates.add(termVariations.fetchDateValue());
+                    }
+                    if(termVariations.fetchDateValue().isBefore(loan.getExpectedDisbursedOnLocalDate())){
+                        baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode(
+                                "variable.schedule.insert.not.allowed.before.disbursement.date", "Loan schedule insert request invalid");
+                    }
                     if (termVariations.fetchTermApplicaDate().isEqual(lastDate)) {
                         lastDate = termVariations.fetchDateValue();
                     }
@@ -674,7 +694,10 @@ public class LoanScheduleAssembler {
             }
 
         }
-
+        if (!overlappings.isEmpty()) {
+            baseDataValidator.reset().failWithCodeNoParameterAddedToErrorCode("variable.schedule.modify.date.can.not.be.due.date",
+                    overlappings);
+        }
         LoanProductVariableInstallmentConfig installmentConfig = loan.loanProduct().loanProductVariableInstallmentConfig();
         final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
                 CalendarEntityType.LOANS.getValue());
@@ -726,6 +749,7 @@ public class LoanScheduleAssembler {
                 break;
                 case INSERT_INSTALLMENT:
                     insertVariations.put(loanTermVariations.fetchTermApplicaDate(), loanTermVariations);
+                    adjustDueDateVariations.put(loanTermVariations.fetchTermApplicaDate(), loanTermVariations.fetchTermApplicaDate());
                 break;
                 case DELETE_INSTALLMENT:
                     adjustDueDateVariations.put(loanTermVariations.fetchTermApplicaDate(), null);
