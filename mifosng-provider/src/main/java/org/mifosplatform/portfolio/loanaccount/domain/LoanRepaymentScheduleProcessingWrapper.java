@@ -20,7 +20,7 @@ import org.mifosplatform.organisation.monetary.domain.Money;
 public class LoanRepaymentScheduleProcessingWrapper {
 
     public void reprocess(final MonetaryCurrency currency, final LocalDate disbursementDate,
-            final List<LoanRepaymentScheduleInstallment> repaymentPeriods, final Set<LoanCharge> loanCharges, int numberOfInstallments) {
+            final List<LoanRepaymentScheduleInstallment> repaymentPeriods, final Set<LoanCharge> loanCharges) {
 
         Money totalInterest = Money.zero(currency);
         Money totalPrincipal = Money.zero(currency);
@@ -32,14 +32,14 @@ public class LoanRepaymentScheduleProcessingWrapper {
         for (final LoanRepaymentScheduleInstallment period : repaymentPeriods) {
 
             final Money feeChargesDueForRepaymentPeriod = cumulativeFeeChargesDueWithin(startDate, period.getDueDate(), loanCharges,
-                    currency, period, numberOfInstallments, totalPrincipal, totalInterest, true);
+                    currency, period, totalPrincipal, totalInterest, true);
             final Money feeChargesWaivedForRepaymentPeriod = cumulativeFeeChargesWaivedWithin(startDate, period.getDueDate(), loanCharges,
                     currency, true);
             final Money feeChargesWrittenOffForRepaymentPeriod = cumulativeFeeChargesWrittenOffWithin(startDate, period.getDueDate(),
                     loanCharges, currency, true);
 
             final Money penaltyChargesDueForRepaymentPeriod = cumulativePenaltyChargesDueWithin(startDate, period.getDueDate(),
-                    loanCharges, currency, period, numberOfInstallments, totalPrincipal, totalInterest, true);
+                    loanCharges, currency, period, totalPrincipal, totalInterest, true);
             final Money penaltyChargesWaivedForRepaymentPeriod = cumulativePenaltyChargesWaivedWithin(startDate, period.getDueDate(),
                     loanCharges, currency, true);
             final Money penaltyChargesWrittenOffForRepaymentPeriod = cumulativePenaltyChargesWrittenOffWithin(startDate,
@@ -54,8 +54,8 @@ public class LoanRepaymentScheduleProcessingWrapper {
     }
 
     private Money cumulativeFeeChargesDueWithin(final LocalDate periodStart, final LocalDate periodEnd, final Set<LoanCharge> loanCharges,
-            final MonetaryCurrency monetaryCurrency, LoanRepaymentScheduleInstallment period, int numberOfRepayments,
-            final Money totalPrincipal, final Money totalInterest, boolean isInstallmentChargeApplicable) {
+            final MonetaryCurrency monetaryCurrency, LoanRepaymentScheduleInstallment period, final Money totalPrincipal,
+            final Money totalInterest, boolean isInstallmentChargeApplicable) {
 
         Money cumulative = Money.zero(monetaryCurrency);
 
@@ -75,7 +75,7 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));
                         cumulative = cumulative.plus(loanChargeAmt);
                     } else {
-                        cumulative = cumulative.plus(loanCharge.amount().divide(BigDecimal.valueOf(numberOfRepayments)));
+                        cumulative = cumulative.plus(loanCharge.amountOrPercentage());
                     }
                 } else if (loanCharge.isOverdueInstallmentCharge()
                         && loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)
@@ -146,7 +146,7 @@ public class LoanRepaymentScheduleProcessingWrapper {
 
     private Money cumulativePenaltyChargesDueWithin(final LocalDate periodStart, final LocalDate periodEnd,
             final Set<LoanCharge> loanCharges, final MonetaryCurrency currency, LoanRepaymentScheduleInstallment period,
-            int numberOfRepayments, final Money totalPrincipal, final Money totalInterest, boolean isInstallmentChargeApplicable) {
+            final Money totalPrincipal, final Money totalInterest, boolean isInstallmentChargeApplicable) {
 
         Money cumulative = Money.zero(currency);
 
@@ -166,7 +166,7 @@ public class LoanRepaymentScheduleProcessingWrapper {
                         BigDecimal loanChargeAmt = amount.multiply(loanCharge.getPercentage()).divide(BigDecimal.valueOf(100));
                         cumulative = cumulative.plus(loanChargeAmt);
                     } else {
-                        cumulative = cumulative.plus(loanCharge.amount().divide(BigDecimal.valueOf(numberOfRepayments)));
+                        cumulative = cumulative.plus(loanCharge.amountOrPercentage());
                     }
                 } else if (loanCharge.isOverdueInstallmentCharge()
                         && loanCharge.isDueForCollectionFromAndUpToAndIncluding(periodStart, periodEnd)

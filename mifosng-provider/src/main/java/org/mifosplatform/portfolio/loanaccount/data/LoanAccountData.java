@@ -1434,7 +1434,7 @@ public class LoanAccountData {
     }
 
     private static boolean isLoanCycleValuesWhenConditionEqual(Integer loanCycleNumber, LoanProductBorrowerCycleVariationData data) {
-        return data.getBorrowerCycleNumber() == loanCycleNumber && data.getValueConditionType().equals(LoanProductValueConditionType.EQUAL);
+        return data.getBorrowerCycleNumber().equals(loanCycleNumber) && data.getValueConditionType().equals(LoanProductValueConditionType.EQUAL);
     }
 
     public LoanProductData product() {

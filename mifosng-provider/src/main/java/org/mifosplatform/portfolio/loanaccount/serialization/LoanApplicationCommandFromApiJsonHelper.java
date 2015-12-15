@@ -237,7 +237,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
                 baseDataValidator.reset().parameter(LoanApiConstants.isFloatingInterestRate).trueOrFalseRequired(false);
             }
 
-            if (interestType != null && interestType == InterestMethod.FLAT.getValue()) {
+            if (interestType != null && interestType.equals(InterestMethod.FLAT.getValue())) {
                 baseDataValidator
                         .reset()
                         .parameter(interestTypeParameterName)
@@ -618,7 +618,7 @@ public final class LoanApplicationCommandFromApiJsonHelper {
             if (interestType == null) {
                 interestType = existingLoanApplication.getLoanProductRelatedDetail().getInterestMethod().getValue();
             }
-            if (interestType != null && interestType == InterestMethod.FLAT.getValue()) {
+            if (interestType != null && interestType.equals(InterestMethod.FLAT.getValue())) {
                 baseDataValidator
                         .reset()
                         .parameter(interestTypeParameterName)

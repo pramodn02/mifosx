@@ -119,11 +119,14 @@ public class VariableLoanScheduleFromApiJsonValidator {
             baseDataValidator.reset().parameter(arrayName).parameterAtIndexArray(LoanApiConstants.principalParamName, i)
                     .value(principalAmount).zeroOrPositiveAmount();
 
-            if (loan.getLoanProductRelatedDetail().getAmortizationMethod().isEqualInstallment() && principalAmount != null) {
+            if (loan.getLoanProductRelatedDetail().getInterestMethod().isDecliningBalnce()
+                    && loan.getLoanProductRelatedDetail().getAmortizationMethod().isEqualInstallment() && principalAmount != null) {
                 List<String> unsupportedParams = new ArrayList<>(1);
                 unsupportedParams.add(LoanApiConstants.principalParamName);
                 throw new UnsupportedParameterException(unsupportedParams);
-            } else if (loan.getLoanProductRelatedDetail().getAmortizationMethod().isEqualPrincipal() && installmentAmount != null) {
+            } else if ((!loan.getLoanProductRelatedDetail().getInterestMethod().isDecliningBalnce() || loan.getLoanProductRelatedDetail()
+                    .getAmortizationMethod().isEqualPrincipal())
+                    && installmentAmount != null) {
                 List<String> unsupportedParams = new ArrayList<>(1);
                 unsupportedParams.add(LoanApiConstants.installmentAmountParamName);
                 throw new UnsupportedParameterException(unsupportedParams);

@@ -598,7 +598,7 @@ public class LoanScheduleAssembler {
             if (lastDate.isBefore(installment.getDueDate())) {
                 lastDate = installment.getDueDate();
             }
-            if (graceOnPrincipal == installment.getInstallmentNumber()) {
+            if (graceOnPrincipal.equals(installment.getInstallmentNumber())) {
                 graceApplicable = installment.getDueDate();
             }
         }
@@ -824,7 +824,8 @@ public class LoanScheduleAssembler {
             final JsonObject arrayElement = modificationsArray.get(i - 1).getAsJsonObject();
             BigDecimal decimalValue = null;
             LoanTermVariationType decimalValueVariationType = LoanTermVariationType.INVALID;
-            if (loan.getLoanProductRelatedDetail().getAmortizationMethod().isEqualInstallment()) {
+            if (loan.getLoanProductRelatedDetail().getAmortizationMethod().isEqualInstallment()
+                    && loan.getLoanProductRelatedDetail().getInterestMethod().isDecliningBalnce()) {
                 decimalValue = this.fromApiJsonHelper.extractBigDecimalNamed(LoanApiConstants.installmentAmountParamName, arrayElement,
                         locale);
                 decimalValueVariationType = LoanTermVariationType.EMI_AMOUNT;

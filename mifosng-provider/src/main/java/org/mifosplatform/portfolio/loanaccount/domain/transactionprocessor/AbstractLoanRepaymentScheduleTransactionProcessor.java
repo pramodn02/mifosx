@@ -51,16 +51,14 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
     @Override
     public ChangedTransactionDetail handleTransaction(final LocalDate disbursementDate,
             final List<LoanTransaction> transactionsPostDisbursement, final MonetaryCurrency currency,
-            final List<LoanRepaymentScheduleInstallment> installments, final Set<LoanCharge> charges, int numberOfInstallments) {
+            final List<LoanRepaymentScheduleInstallment> installments, final Set<LoanCharge> charges) {
         final boolean reprocessCharges = true;
-        return handleTransaction(disbursementDate, transactionsPostDisbursement, currency, installments, charges, reprocessCharges,
-                numberOfInstallments);
+        return handleTransaction(disbursementDate, transactionsPostDisbursement, currency, installments, charges, reprocessCharges);
     }
 
     private ChangedTransactionDetail handleTransaction(final LocalDate disbursementDate,
             final List<LoanTransaction> transactionsPostDisbursement, final MonetaryCurrency currency,
-            final List<LoanRepaymentScheduleInstallment> installments, final Set<LoanCharge> charges, boolean reprocessCharges,
-            int numberOfInstallments) {
+            final List<LoanRepaymentScheduleInstallment> installments, final Set<LoanCharge> charges, boolean reprocessCharges) {
 
         if (charges != null) {
             for (final LoanCharge loanCharge : charges) {
@@ -79,7 +77,7 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
         // loan charges)
         if (reprocessCharges) {
             final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
-            wrapper.reprocess(currency, disbursementDate, installments, charges, numberOfInstallments);
+            wrapper.reprocess(currency, disbursementDate, installments, charges);
         }
 
         final ChangedTransactionDetail changedTransactionDetail = new ChangedTransactionDetail();
@@ -592,10 +590,9 @@ public abstract class AbstractLoanRepaymentScheduleTransactionProcessor implemen
     @Override
     public ChangedTransactionDetail populateDerivedFeildsWithoutReprocess(final LocalDate disbursementDate,
             final List<LoanTransaction> transactionsPostDisbursement, final MonetaryCurrency currency,
-            final List<LoanRepaymentScheduleInstallment> installments, final Set<LoanCharge> charges, int numberOfInstallments) {
+            final List<LoanRepaymentScheduleInstallment> installments, final Set<LoanCharge> charges) {
         final boolean reprocessCharges = false;
-        return handleTransaction(disbursementDate, transactionsPostDisbursement, currency, installments, charges, reprocessCharges,
-                numberOfInstallments);
+        return handleTransaction(disbursementDate, transactionsPostDisbursement, currency, installments, charges, reprocessCharges);
     }
 
     private LoanCharge findLatestPaidChargeFromUnOrderedSet(final Set<LoanCharge> charges, MonetaryCurrency currency) {

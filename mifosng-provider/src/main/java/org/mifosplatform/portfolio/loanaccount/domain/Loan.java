@@ -577,10 +577,7 @@ public class Loan extends AbstractPersistable<Long> {
                 totalChargeAmt = loanCharge.amountOutstanding();
             }
         } else {
-            chargeAmt = loanCharge.amount();
-            if (loanCharge.isInstalmentFee()) {
-                chargeAmt = chargeAmt.divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
-            }
+            chargeAmt = loanCharge.amountOrPercentage();
         }
         loanCharge.update(chargeAmt, loanCharge.getDueLocalDate(), amount, fetchNumberOfInstallmensAfterExceptions(), totalChargeAmt);
 
@@ -597,8 +594,7 @@ public class Loan extends AbstractPersistable<Long> {
         // store Id's of existing loan transactions and existing reversed loan
         // transactions
         final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
-        wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges(),
-                fetchNumberOfInstallmensAfterExceptions());
+        wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges());
         updateLoanSummaryDerivedFields();
 
     }
@@ -609,8 +605,7 @@ public class Loan extends AbstractPersistable<Long> {
                 .determineProcessor(this.transactionProcessingStrategy);
         final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
         changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
-                allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges(),
-                fetchNumberOfInstallmensAfterExceptions());
+                allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges());
         for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
             mapEntry.getValue().updateLoan(this);
         }
@@ -746,8 +741,7 @@ public class Loan extends AbstractPersistable<Long> {
         if (removed) {
             loanCharge.setActive(false);
             final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
-            wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges(),
-                    fetchNumberOfInstallmensAfterExceptions());
+            wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges());
             updateSummaryWithTotalFeeChargesDueAtDisbursement(deriveSumTotalOfChargesDueAtDisbursement());
         }
 
@@ -766,7 +760,7 @@ public class Loan extends AbstractPersistable<Long> {
              ***/
             final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
             loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(), allNonContraTransactionsPostDisbursement,
-                    getCurrency(), this.repaymentScheduleInstallments, charges(), fetchNumberOfInstallmensAfterExceptions());
+                    getCurrency(), this.repaymentScheduleInstallments, charges());
         }
         this.charges.remove(loanCharge);
         updateLoanSummaryDerivedFields();
@@ -824,12 +818,11 @@ public class Loan extends AbstractPersistable<Long> {
              ***/
             final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
             loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(), allNonContraTransactionsPostDisbursement,
-                    getCurrency(), this.repaymentScheduleInstallments, charges(), fetchNumberOfInstallmensAfterExceptions());
+                    getCurrency(), this.repaymentScheduleInstallments, charges());
         } else {
             // reprocess loan schedule based on charge been waived.
             final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
-            wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges(),
-                    fetchNumberOfInstallmensAfterExceptions());
+            wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges());
         }
 
         updateLoanSummaryDerivedFields();
@@ -991,12 +984,11 @@ public class Loan extends AbstractPersistable<Long> {
              ***/
             final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
             loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(), allNonContraTransactionsPostDisbursement,
-                    getCurrency(), this.repaymentScheduleInstallments, charges(), fetchNumberOfInstallmensAfterExceptions());
+                    getCurrency(), this.repaymentScheduleInstallments, charges());
         } else {
             // reprocess loan schedule based on charge been waived.
             final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
-            wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges(),
-                    fetchNumberOfInstallmensAfterExceptions());
+            wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges());
         }
 
         updateLoanSummaryDerivedFields();
@@ -1091,10 +1083,7 @@ public class Loan extends AbstractPersistable<Long> {
                     totalChargeAmt = calculatePerInstallmentChargeAmount(loanCharge);
                 }
             } else {
-                chargeAmt = loanCharge.amount();
-                if (loanCharge.isInstalmentFee()) {
-                    chargeAmt = chargeAmt.divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
-                }
+                chargeAmt = loanCharge.amountOrPercentage();
             }
             if (charge != null)
                 charge.update(chargeAmt, loanCharge.getDueLocalDate(), amount, fetchNumberOfInstallmensAfterExceptions(), totalChargeAmt);
@@ -1606,10 +1595,7 @@ public class Loan extends AbstractPersistable<Long> {
                 totalChargeAmt = calculatePerInstallmentChargeAmount(loanCharge);
             }
         } else {
-            chargeAmt = loanCharge.amount();
-            if (loanCharge.isInstalmentFee()) {
-                chargeAmt = chargeAmt.divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
-            }
+            chargeAmt = loanCharge.amountOrPercentage();
         }
         if (loanCharge.isActive()) {
             loanCharge.update(chargeAmt, loanCharge.getDueLocalDate(), amount, fetchNumberOfInstallmensAfterExceptions(), totalChargeAmt);
@@ -2448,8 +2434,7 @@ public class Loan extends AbstractPersistable<Long> {
                 final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor = this.transactionProcessorFactory
                         .determineProcessor(this.transactionProcessingStrategy);
                 changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
-                        allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges(),
-                        fetchNumberOfInstallmensAfterExceptions());
+                        allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges());
                 for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
                     mapEntry.getValue().updateLoan(this);
                 }
@@ -2816,14 +2801,13 @@ public class Loan extends AbstractPersistable<Long> {
         }
         final List<LoanTermVariations> removeTerms = new ArrayList<>(this.loanTermVariations.size());
         for (LoanTermVariations variations : this.loanTermVariations) {
-            if (variations.getOnLoanStatus() == LoanStatus.ACTIVE.getValue()) {
+            if (variations.getOnLoanStatus().equals(LoanStatus.ACTIVE.getValue())) {
                 removeTerms.add(variations);
             }
         }
         this.loanTermVariations.removeAll(removeTerms);
         final LoanRepaymentScheduleProcessingWrapper wrapper = new LoanRepaymentScheduleProcessingWrapper();
-        wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges(),
-                fetchNumberOfInstallmensAfterExceptions());
+        wrapper.reprocess(getCurrency(), getDisbursementDate(), this.repaymentScheduleInstallments, charges());
 
         updateLoanSummaryDerivedFields();
     }
@@ -3043,8 +3027,7 @@ public class Loan extends AbstractPersistable<Long> {
             }
             final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
             changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
-                    allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges(),
-                    fetchNumberOfInstallmensAfterExceptions());
+                    allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges());
             for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
                 mapEntry.getValue().updateLoan(this);
             }
@@ -3363,7 +3346,7 @@ public class Loan extends AbstractPersistable<Long> {
         }
         ChangedTransactionDetail changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(
                 getDisbursementDate(), allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments,
-                charges(), fetchNumberOfInstallmensAfterExceptions());
+                charges());
         updateLoanSummaryDerivedFields();
         return changedTransactionDetail;
     }
@@ -3502,8 +3485,7 @@ public class Loan extends AbstractPersistable<Long> {
             }
             final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
             changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
-                    allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges(),
-                    fetchNumberOfInstallmensAfterExceptions());
+                    allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges());
             for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
                 mapEntry.getValue().updateLoan(this);
                 this.loanTransactions.add(mapEntry.getValue());
@@ -4609,7 +4591,7 @@ public class Loan extends AbstractPersistable<Long> {
             for (final LoanRepaymentScheduleInstallment installment : this.repaymentScheduleInstallments) {
                 BigDecimal amount = BigDecimal.ZERO;
                 if (loanCharge.getChargeCalculation().isFlat()) {
-                    amount = loanCharge.amount().divide(BigDecimal.valueOf(fetchNumberOfInstallmensAfterExceptions()));
+                    amount = loanCharge.amountOrPercentage();
                 } else {
                     amount = calculateInstallmentChargeAmount(loanCharge.getChargeCalculation(), loanCharge.getPercentage(), installment)
                             .getAmount();
@@ -4811,7 +4793,7 @@ public class Loan extends AbstractPersistable<Long> {
         final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
         ChangedTransactionDetail changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(
                 getDisbursementDate(), allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments,
-                charges(), fetchNumberOfInstallmensAfterExceptions());
+                charges());
         for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
             mapEntry.getValue().updateLoan(this);
             this.loanTransactions.add(mapEntry.getValue());
@@ -4917,7 +4899,7 @@ public class Loan extends AbstractPersistable<Long> {
         final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
         ChangedTransactionDetail changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(
                 getDisbursementDate(), allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments,
-                charges(), fetchNumberOfInstallmensAfterExceptions());
+                charges());
         for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
             mapEntry.getValue().updateLoan(this);
         }
@@ -4972,7 +4954,7 @@ public class Loan extends AbstractPersistable<Long> {
                 copyTransactions.add(LoanTransaction.copyTransactionProperties(loanTransaction));
             }
             loanRepaymentScheduleTransactionProcessor.populateDerivedFeildsWithoutReprocess(getDisbursementDate(), copyTransactions,
-                    getCurrency(), this.repaymentScheduleInstallments, charges(), fetchNumberOfInstallmensAfterExceptions());
+                    getCurrency(), this.repaymentScheduleInstallments, charges());
 
             updateLoanSummaryDerivedFields();
         }
@@ -5510,8 +5492,7 @@ public class Loan extends AbstractPersistable<Long> {
         } else {
             final List<LoanTransaction> allNonContraTransactionsPostDisbursement = retreiveListOfTransactionsPostDisbursement();
             changedTransactionDetail = loanRepaymentScheduleTransactionProcessor.handleTransaction(getDisbursementDate(),
-                    allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges(),
-                    fetchNumberOfInstallmensAfterExceptions());
+                    allNonContraTransactionsPostDisbursement, getCurrency(), this.repaymentScheduleInstallments, charges());
             for (final Map.Entry<Long, LoanTransaction> mapEntry : changedTransactionDetail.getNewTransactionMappings().entrySet()) {
                 mapEntry.getValue().updateLoan(this);
             }

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.joda.time.LocalDate;
-import org.mifosplatform.portfolio.loanaccount.domain.LoanTermVariations;
 
 public class LoanTermVariationsDataWrapper {
 
@@ -94,6 +93,17 @@ public class LoanTermVariationsDataWrapper {
             }
         }
         return repaymetsForAdjust;
+    }
+
+    public LoanTermVariationsData fetchLoanTermDueDateVariationsData(final LocalDate onDate) {
+        LoanTermVariationsData data = null;
+        for (LoanTermVariationsData termVariationsData : this.dueDateVariation) {
+            if (onDate.isEqual(termVariationsData.getTermApplicableFrom())) {
+                data = termVariationsData;
+                break;
+            }
+        }
+        return data;
     }
 
 }
