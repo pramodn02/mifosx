@@ -1,4 +1,4 @@
-# Getting started with Mifos X
+# Getting started with Fineract
 Instructions for getting started are located at https://mifosforge.jira.com/wiki/display/MIFOSX/Getting+started+-+Contributing+to+MifosX
 
 # Pull Request Checklist

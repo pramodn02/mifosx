@@ -1,35 +1,35 @@
-# Installation Mifos Platform
+# Installation Fineract Platform
 
-This file describes how to install mifos platform for use in a production or test environment.
+This file describes how to install fineract platform for use in a production or test environment.
 
 ## Release Artifact Structure
 
 The release artifact (.zip file) has the following structure:
 
 ```
-  + mifosplatform-X.Y.Z.RELEASE  ... parent folder which will have the release number on it
+  + fineractplatform-X.Y.Z.RELEASE  ... parent folder which will have the release number on it
   |
   + api-docs ... folder contains html based documentation on the platform API for this release
   + database ... folder contains database setup and upgrade scripts along with sample data required for installation
   + pentahoReports ... folder contains any out-of-the-box reports provided through pentaho
   + apps ... folder contains apps like community app that speak to the platform
-  + runmifosx.bat ... launch script for Windows 
-  + runmifosx.sh ... launch script for Mac OS X and Linux
+  + runfineract.bat ... launch script for Windows 
+  + runfineract.sh ... launch script for Mac OS X and Linux
   |
   -- CHANGELOG.MD ... file documents changelog of project up to this release
   -- CONTRIBUTORS.MD ... file provides details on contributors to project
   -- INSTALL.MD ... file provides details on installation instructions
   -- LICENSE.MD ... file provides details on the open source license used by the project
-  -- mifosng-provider.war ... the platform WAR file to be dropped into Tomcat 7
+  -- fineract-provider.war ... the platform WAR file to be dropped into Tomcat 7
   -- README.MD ... initial readme file for the project
   -- VERSIONING.MD ... file provides details on approach to release versioning 
 ```
   
 ## How to Install
 
-The three ways to get up and running with mifos platform is:
+The three ways to get up and running with fineract platform is:
 
-1. Use Amazon AWS and mifosplatform public AMI to spin up a new instance in the cloud
+1. Use Amazon AWS and fineractplatform public AMI to spin up a new instance in the cloud
 2. Manually install the prerequisite software on your own machine, follow setup instructions and use release artifacts to get platform running yourself.
 
 
@@ -37,14 +37,14 @@ The three ways to get up and running with mifos platform is:
 
 Important : Automatic setup is currently broken, please follow the instructions for **Manual Installation** instead. For details of the issue, refer comments at https://mifosforge.jira.com/browse/MIFOSX-1756
 
-The Mifos release artifact contains two launch scripts with names starting with "**runmifosx**". One of them (the one with the *.bat* file extension) is used to launch the platform on a Windows machine while the other (which has the *.sh* file extension) is used to launch the platform on Mac OS X and Linux. Just double-click on the respective script (depending on your OS) and voila! you have your own Mifos X platform running locally on your computer. 
+The fineract release artifact contains two launch scripts with names starting with "**runfineract**". One of them (the one with the *.bat* file extension) is used to launch the platform on a Windows machine while the other (which has the *.sh* file extension) is used to launch the platform on Mac OS X and Linux. Just double-click on the respective script (depending on your OS) and voila! you have your own fineract platform running locally on your computer. 
 
 **Note**: *In case your script does not launch by double clicking on Linux or Mac OS X, here's what you can do. Head over to bash and type the following:*
 
 ```
-$ cd /path/where/runmifosx.sh/is/located
-$ chmod 0755 ./runmifosx.sh
-$ ./runmifosx.sh
+$ cd /path/where/runfineract.sh/is/located
+$ chmod 0755 ./runfineract.sh
+$ ./runfineract.sh
 ```
 
 ## 2. Amazon Public AMI
@@ -54,14 +54,14 @@ $ ./runmifosx.sh
 
   *Note:* Read through the following as you step through the AWS Wizard
   
-  - You are automatically brought to Step 2 on the wizard, by default a 'micro' instance is selected, you may need to select a 'General Purpose' m1.small as the t1.micro's memory is right on the edge of whats needed to support MySQL, Tomcat 7 + Mifos Platform
+  - You are automatically brought to Step 2 on the wizard, by default a 'micro' instance is selected, you may need to select a 'General Purpose' m1.small as the t1.micro's memory is right on the edge of whats needed to support MySQL, Tomcat 7 + Fineract Platform
   - Use default settings for steps 3 to 5 until you reach step 6 configure security group.
   - If your first time using AWS you should use the create new security group option and add the following 'rules' to the security group:
     - SSH (PORT 22), MYSQL (3306), HTTPS (443), Custom TCP Rule (8443) all with a 'Source' value of 'Anywhere'
   - Click 'Review and Launch'
   - You will be asked to use a 'keypair' which you will need to SSH onto the new instance, if this is your first time create a new keypair, be srue to download it and store in place as you will need it later, otherwise use an existing keypair.
   - When the instance starts, the following should be available at:
-    - Platform application should be available @ https://[public DNS]:8443/mifosng-provider/api/v1/offices?tenantIdentifier=default&pretty=true
+    - Platform application should be available @ https://[public DNS]:8443/fineract-provider/api/v1/offices?tenantIdentifier=default&pretty=true
     - Community app should be available @ https://[public DNS]:8443/community-app
     - API docs should be available @ https://[public DNS]:8443/api-docs/apiLive.htm
 
@@ -71,7 +71,7 @@ $ ./runmifosx.sh
 
 ### 3.1 Prerequisite Software
 
-  Before running mifos platform you must have the following software installed:
+  Before running fineract platform you must have the following software installed:
   - Oracle Java - JDK 7 (http://www.oracle.com/technetwork/java/javase/downloads/index.html)
   - Oracle MySQL - (http://dev.mysql.com/downloads/)
   - Apache Tomcat 7 - (http://tomcat.apache.org/download-70.cgi)
@@ -84,14 +84,14 @@ $ ./runmifosx.sh
   ```
   mysqladmin -u root -p 'oldpassword' password newpassword
   ```
-  The mifosplatform settings default to a mysql root user with username: root, password: mysql
+  The fineractplatform settings default to a mysql root user with username: root, password: mysql
   
-  If you have never installed mifosplatform before follow section 2.2.1 for first time setup of database, otherwise read section 2.2.2 on database upgrades.
+  If you have never installed fineractplatform before follow section 2.2.1 for first time setup of database, otherwise read section 2.2.2 on database upgrades.
   
 #### 3.2.1 First Time Database setup
 
-  Mifos platform has support for hosting multiple tenants so we use two database schemas:
-   - *mifosplatform-tenants*: which is responsible for persisting the tenant information which is used when deciding what schema each incoming request in the platform should route to. It acts as a registry which contains the details of all the tenant databases, and their connection information, which is used by MifosX to connect to the appropriate tenant.
+  Fineract platform has support for hosting multiple tenants so we use two database schemas:
+   - *mifosplatform-tenants*: which is responsible for persisting the tenant information which is used when deciding what schema each incoming request in the platform should route to. It acts as a registry which contains the details of all the tenant databases, and their connection information, which is used by Fineract to connect to the appropriate tenant.
    - *mifostenant-default*: All tenant specific schemas follow the pattern mifostenant-xxxx, out of the box the default schema is used.
    
   Step one: create mifosplatform-tenants database
@@ -114,7 +114,7 @@ $ ./runmifosx.sh
   Manually restore the contents of *mifosplatform-tenants* database
 
   ```
-  mysql -uroot -pmysql mifosplatform-tenants < database/mifospltaform-tenants-first-time-install.sql
+  mysql -uroot -pmysql mifosplatform-tenants < database/mifosplatform-tenants-first-time-install.sql
   ```
  Next, update the default credentials for connecting to *mifoplatform-default* database stored in the *tenants* table of *mifosplatform-tenants* with your credentials
 
@@ -150,7 +150,7 @@ select * from schema_version;
 
 If the table does not exist, create the same using the script at https://gist.github.com/vishwasbabu/dc105b6a9450cff8ff1f
 
-Next, check if the patch for "externalizing mysql connection properties" has been run (i.e if you are updating from 1.21 or a higher version of Mifos X)
+Next, check if the patch for "externalizing mysql connection properties" has been run (i.e if you are updating from 1.21 or a higher version of fineract)
 
 ````
 mysql -uroot -pmysql
@@ -192,7 +192,7 @@ INSERT INTO `schema_version` (`version_rank`, `installed_rank`, `version`, `desc
 
 #### 3.3.2 Logging
 
-  - In the [TOMCAT_HOME]/logs create a file called ```mifos-platform.log```
+  - In the [TOMCAT_HOME]/logs create a file called ```fineract-platform.log```
 
 #### 3.3.3 Libraries
 
@@ -281,7 +281,7 @@ INSERT INTO `schema_version` (`version_rank`, `installed_rank`, `version`, `desc
 #### 3.3.6 Drop application into tomcat webapps folder
 
   Drop the following from the release artifact into the [TOMCAT_HOME]/webapps folder:
-  - mifosng-provider.war
+  - fineract-provider.war
   
   Drop the following from the release artifact into [TOMCAT_HOME]/webapps/ROOT folder:
   - The entire ```apps/community-app``` folder. 
@@ -289,13 +289,13 @@ INSERT INTO `schema_version` (`version_rank`, `installed_rank`, `version`, `desc
 
 #### 3.3.7 Startup tomcat
   Startup tomcat:
-  - Platform application should be available @ https://[server ip address]:8443/mifosng-provider/api/v1/offices?tenantIdentifier=default&pretty=true
-  - Community application should be available @ https://[server ip address]:8443/community-app?baseApiUrl=https://[server ip address]:8443/mifosng-provider/api/v1/
+  - Platform application should be available @ https://[server ip address]:8443/fineract-provider/api/v1/offices?tenantIdentifier=default&pretty=true
+  - Community application should be available @ https://[server ip address]:8443/community-app?baseApiUrl=https://[server ip address]:8443/fineract-provider/api/v1/
   - API docs should be available @ https://[server ip address]:8443/api-docs/apiLive.htm
   
-  *where [server ip address] is the hostname or IP address of your computer. For instance, if you've installed Mifos on your local machine then [server ip address] is localhost*
+  *where [server ip address] is the hostname or IP address of your computer. For instance, if you've installed fineract on your local machine then [server ip address] is localhost*
 
 ## How to integrate the web front-end UI with the back-end
 
 To be able to use the front-end UI along with the back-end, you simply need to copy the webapp's source code files to the ```apps``` folder. For instance, you could copy the source code files of the community app to ```apps/community-app```. This would enable you to access the commuity app from the following URL:
-*https://[server ip address]:8443/mifosng-provider/apps/community-app?baseApiUrl=https://[server ip address]:8443*
+*https://[server ip address]:8443/fineract-provider/apps/community-app?baseApiUrl=https://[server ip address]:8443*

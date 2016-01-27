@@ -22,4 +22,4 @@ rebel.xml
 *.gradletasknamecache
 *~
 .metadata
-mifosng-provider\src\main\resources\application.properties
+fineract-provider\src\main\resources\application.properties
